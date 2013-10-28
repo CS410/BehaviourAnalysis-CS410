@@ -1,4 +1,5 @@
 import GitInformation.Author;
+import GitInformation.CommitInfo;
 import GitInformation.GitScraperUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -32,10 +33,11 @@ public class main {
         int count = 0;
         GitScraperUtils scraper = new GitScraperUtils(repo);
         for (RevCommit commit: commits) {
-            System.out.println(commit.getFullMessage());
+            //System.out.println(commit.getFullMessage());
             authorHash = scraper.addFileChanges(authorHash, commit);
             count ++;
         }
+
     }
 
 }

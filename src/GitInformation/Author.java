@@ -25,6 +25,15 @@ public class Author {
         return commitList;
     }
 
+    public String getName() {
+        return name;
+
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
     protected void addCommit(CommitInfo newCommit) {
         commitList.add(newCommit);
 

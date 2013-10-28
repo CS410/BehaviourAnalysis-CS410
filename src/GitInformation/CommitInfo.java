@@ -24,13 +24,17 @@ public class CommitInfo {
 
     }
 
-    public void addChangedFile(FileChanges changedFile) {
+    protected void addChangedFile(FileChanges changedFile) {
         filesChangedList.add(changedFile);
 
     }
 
     public List<FileChanges> getFilesChanged() {
         return filesChangedList;
+    }
+
+    public Date getCommitTime() {
+        return commitTime;
     }
 
 }
