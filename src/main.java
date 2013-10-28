@@ -32,8 +32,8 @@ public class main {
         int count = 0;
         GitScraperUtils scraper = new GitScraperUtils(repo);
         for (RevCommit commit: commits) {
-            scraper.listFileChanges(commit);
             System.out.println(commit.getFullMessage());
+            authorHash = scraper.addFileChanges(authorHash, commit);
             count ++;
         }
     }

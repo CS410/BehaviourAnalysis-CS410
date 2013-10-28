@@ -31,6 +31,18 @@ public class GitScraperUtils{
     }
 
 
+    public Map<String, Author> addFileChanges(Map<String, Author> authorHash, RevCommit commit) throws IOException {
+        if (!authorHash.containsKey(commit.getAuthorIdent().getEmailAddress())) {
+            authorHash.put(commit.getAuthorIdent().getEmailAddress(), new Author(commit.getAuthorIdent().getName(), commit.getAuthorIdent().getEmailAddress()));
+        }
+
+        Author author = authorHash.get(commit.getAuthorIdent().getEmailAddress());
+        author.addCommit(listFileChanges(commit));
+        authorHash.put(commit.getAuthorIdent().getEmailAddress(), author);
+        return authorHash;
+
+    }
+
     public CommitInfo listFileChanges(RevCommit commit) throws IOException {
 
         CommitInfo commitInfo = new CommitInfo(commit.getAuthorIdent().getWhen());
