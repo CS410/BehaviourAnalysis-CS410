@@ -32,5 +32,4 @@ public class FileChanges {
     public List<String> getLinesDeleted () {
         return deletions;
     }
-
 }
