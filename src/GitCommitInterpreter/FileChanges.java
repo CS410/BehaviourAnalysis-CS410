@@ -1,4 +1,4 @@
-package GitInformation;
+package GitCommitInterpreter;
 
 import java.util.List;
 

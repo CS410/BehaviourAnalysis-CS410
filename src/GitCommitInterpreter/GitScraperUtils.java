@@ -1,4 +1,4 @@
-package GitInformation;
+package GitCommitInterpreter;
 
 import org.eclipse.jgit.diff.*;
 import org.eclipse.jgit.lib.Repository;
