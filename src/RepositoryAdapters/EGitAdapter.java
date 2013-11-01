@@ -15,7 +15,7 @@ import RepositoryContent.Author;
 
 public class EGitAdapter {
 	
-	private final static String OAUTH2TOKEN_STRING  = "74350bd070b3f281a6559215ebc4135274c54d36"; // change to your token value
+	private final static String OAUTH2TOKEN_STRING  = "1020f70c94ac8241831535e8561bd0d43066809e"; // change to your token value
 	
 	private RepositoryService repoService;
 	private CommitService commitService;
