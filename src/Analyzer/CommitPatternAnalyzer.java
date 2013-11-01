@@ -1,12 +1,11 @@
-package GitCommitInterpreter;
+package Analyzer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.egit.github.core.CommitStats;
-import org.eclipse.egit.github.core.RepositoryCommit;
+import RepositoryContent.Author;
+import RepositoryContent.CommitInfo;
 
 public class CommitPatternAnalyzer {
 
