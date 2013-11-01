@@ -1,4 +1,4 @@
-package GitCommitInterpreter;
+package Util;
 
 import org.eclipse.jgit.diff.*;
 import org.eclipse.jgit.lib.Repository;
@@ -7,6 +7,9 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
+
+import RepositoryContent.CommitInfo;
+import RepositoryContent.FileChanges;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -20,15 +23,15 @@ import java.util.List;
  * Time: 1:28 PM
  * To change this template use File | Settings | File Templates.
  */
-public class GitScraperUtils{
+public class FileChangesScraper{
     private Repository repo;
     private RevWalk rw;
 
-    public GitScraperUtils(Repository repo){
+    public FileChangesScraper(Repository repo){
         this.repo = repo;
         this.rw = new RevWalk(repo);
     }
-
+    
     public void addListOfFileChanges(CommitInfo commitInfo, RevCommit commit) throws IOException {
         List<DiffEntry> diffs;
         DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
@@ -39,8 +42,7 @@ public class GitScraperUtils{
 
         if (commit.getParentCount() != 0) {
             diffs = df.scan(commit.getParent(0).getTree(), commit.getTree());
-        }
-        else {
+        } else {
             diffs = df.scan(new EmptyTreeIterator(), new CanonicalTreeParser(null, rw.getObjectReader(), commit.getTree()));
         }
 
@@ -65,7 +67,7 @@ public class GitScraperUtils{
         DiffFormatter df = new DiffFormatter(diffOutputStream);
         df.setRepository(repo);
         df.format(diff);
-        String diffOutput = diffOutputStream.toString();//new String (out.toByteArray(), "UTF-8");
+        String diffOutput = diffOutputStream.toString();
         for (String diffLine: diffOutput.split("\\n")) {
             if (diffLine.startsWith(prefix)) {
                 changes.add(diffLine);

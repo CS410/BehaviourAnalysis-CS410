@@ -1,4 +1,4 @@
-package GitCommitInterpreter;
+package RepositoryContent;
 
 import java.util.ArrayList;
 import java.util.List;

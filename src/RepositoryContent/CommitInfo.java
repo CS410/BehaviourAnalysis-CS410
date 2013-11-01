@@ -1,4 +1,4 @@
-package GitCommitInterpreter;
+package RepositoryContent;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,9 +61,7 @@ public class CommitInfo {
     	return deletions;
     }
     
-    // Code for jgit below
-    
-    protected void addChangedFile(FileChanges changedFile) {
+    public void addChangedFile(FileChanges changedFile) {
     	filesChangedList.add(changedFile);
     }
 

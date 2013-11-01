@@ -1,4 +1,4 @@
-package GitCommitInterpreter;
+package RepositoryContent;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public class FileChanges {
     private List<String> deletions;
 
 
-    protected FileChanges(String filename, List<String> additions, List<String> deletions) {
+    public FileChanges(String filename, List<String> additions, List<String> deletions) {
         this.filename = filename;
         this.additions = additions;
         this.deletions = deletions;

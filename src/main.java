@@ -1,29 +1,21 @@
-import Analyzer.TimeAnalyzer;
-import GitCommitInterpreter.Author;
-import GitCommitInterpreter.CommitInfo;
-import GitCommitInterpreter.GitScraperUtils;
+import Analyzer.CommitTimeAnalyzer;
+import RepositoryAdapters.EGitAdapter;
+import RepositoryAdapters.JGitAdapter;
+import RepositoryContent.Author;
+import RepositoryContent.CommitInfo;
+import Util.FileChangesScraper;
 
-import org.eclipse.egit.github.core.Contributor;
 import org.eclipse.egit.github.core.RepositoryCommit;
 import org.eclipse.egit.github.core.User;
-import org.eclipse.egit.github.core.service.CommitService;
-import org.eclipse.egit.github.core.service.RepositoryService;
-import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.storage.file.FileRepository;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -41,48 +33,13 @@ public class main {
     	PrintStream out = new PrintStream(fis);
     	System.setOut(out);
     	
-    	final String OAUTH2TOKEN_STRING  = null; // change to your token value
-        final String REMOTE_URL = "https://github.com/reddit/reddit.git";
-
-        File localPath = new File("reddit-repo");
-        delete(localPath);
-        System.out.println("Cloning from " + REMOTE_URL + " to " + localPath);
-        Git.cloneRepository()
-                .setURI(REMOTE_URL)
-                .setDirectory(localPath)
-                .call();
-        org.eclipse.jgit.lib.Repository localRepo = new FileRepository(localPath.getPath()+"/.git");
-        Git git = new Git(localRepo);
-        Iterable<RevCommit> revCommits = git.log().all().call();
-
-        // Map of shas to revCommits
-        Map<String, RevCommit> commitMap = new HashMap<String, RevCommit>();
-        for (RevCommit revCommit: revCommits) {
-            commitMap.put(ObjectId.toString(revCommit.getId()), revCommit);
-            System.out.println(ObjectId.toString(revCommit.getId()) + revCommit);
-        }
+        JGitAdapter jgitAdapter = new JGitAdapter();
+        EGitAdapter egitAdapter = new EGitAdapter();
+        FileChangesScraper scraper = new FileChangesScraper(jgitAdapter.getRepo());
         
-        GitScraperUtils scraper = new GitScraperUtils(localRepo);
-
-    	// Connect using egit
-    	RepositoryService repoService = new RepositoryService();
-    	repoService.getClient().setOAuth2Token(OAUTH2TOKEN_STRING);
-
-    	CommitService commitService = new CommitService();
-    	commitService.getClient().setOAuth2Token(OAUTH2TOKEN_STRING);
-
-        org.eclipse.egit.github.core.Repository repository = repoService.getRepository("reddit", "reddit");
-    	List<Contributor> contributors = repoService.getContributors(repository, false);
-    	List<RepositoryCommit> commits = commitService.getCommits(repository);
-
-    	// Map of authors
-    	Map<String, Author> authorMap = new HashMap<String, Author>();
-    	for (Contributor contributor : contributors) {
-    		String login = contributor.getLogin();
-    		if (!authorMap.containsKey(login)) {
-    			authorMap.put(login, new Author(login));
-    		}
-    	}
+        List<RepositoryCommit> commits = egitAdapter.getCommits();
+        Map<String, RevCommit> commitMap = jgitAdapter.getCommitMap();
+        Map<String, Author> authorMap = egitAdapter.getAuthorMap();
 
     	// Add CommitInfo to each author
     	for (RepositoryCommit commit : commits) {
@@ -91,7 +48,7 @@ public class main {
     		if(author != null) {
     			login = author.getLogin();
     			CommitInfo commitInfo = new CommitInfo(commit);
-    			// Add commit stats to commitinfo
+    			// Add file changes to commitinfo
     			if (commitMap.containsKey(commitInfo.getSha())) {
     				scraper.addListOfFileChanges(commitInfo, commitMap.get(commitInfo.getSha()));
     			}
@@ -108,24 +65,14 @@ public class main {
 //    			System.out.println(author + ", Additions: " + commitInfo.getAdditions() + ", Deletions: " + commitInfo.getDeletions());
 //    		}
 //    	}
-    }
-
-    public static void delete(File file) throws IOException{
-        if(file.isDirectory()){
-            if (file.list().length == 0){
-                file.delete();
-            } else {
-                String files[] = file.list();
-                for (String temp : files) {
-                    File fileDelete = new File(file, temp);
-                    delete(fileDelete);
-                }
-                if(file.list().length == 0){
-                    file.delete();
-                }
-            }
-        } else{
-            file.delete();
-        }
+    	for (String author : authorMap.keySet()) {
+    		Map<Integer, Integer> commitTimeTable = CommitTimeAnalyzer.calculateCommitTimeTable(authorMap.get(author).getCommitList());
+    		List<Integer> workTimeTable = CommitTimeAnalyzer.calculateWorkHourDistribution(commitTimeTable);
+    		System.out.println(CommitTimeAnalyzer.calculateAvgCommitGap(authorMap.get(author).getCommitList()));
+    		System.out.println("9AM to 11AM" + ": " + workTimeTable.get(0));
+    		System.out.println("11AM to 1PM" + ": " + workTimeTable.get(1));
+    		System.out.println("1PM to 3PM" + ": " + workTimeTable.get(2));
+    		System.out.println("3PM to 5PM" + ": " + workTimeTable.get(3));
+    	}
     }
 }
