@@ -1,6 +1,8 @@
 package RepositoryContent;
 
 import Metrics.CommitContentMetrics;
+import Metrics.CommitPatternMetrics;
+import Metrics.CommitTimeMetrics;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,8 @@ public class Author {
     private List<CommitInfo> commitList;
 
     private CommitContentMetrics commitContentMetrics;
+    private CommitPatternMetrics commitPatternMetrics;
+    private CommitTimeMetrics commitTimeMetrics;
     
     public Author(String login) {
     	this.login = login;
@@ -28,6 +32,8 @@ public class Author {
     	this.commitList = new ArrayList<CommitInfo>();
 
         this.commitContentMetrics = new CommitContentMetrics();
+        this.commitPatternMetrics = new CommitPatternMetrics();
+        this.commitTimeMetrics = new CommitTimeMetrics();
     }
 
     public List<CommitInfo> getCommitList () {
@@ -52,6 +58,14 @@ public class Author {
 
     public CommitContentMetrics getCommitContentMetrics() {
         return this.commitContentMetrics;
+    }
+
+    public CommitPatternMetrics getCommitPatternMetrics() {
+        return this.commitPatternMetrics;
+    }
+
+    public CommitTimeMetrics getCommitTimeMetrics() {
+        return this.commitTimeMetrics;
     }
 
 }

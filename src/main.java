@@ -1,4 +1,6 @@
+import Analyzer.CommitContentAnalyzer;
 import Analyzer.CommitTimeAnalyzer;
+import Metrics.CommitContentMetrics;
 import RepositoryAdapters.EGitAdapter;
 import RepositoryAdapters.JGitAdapter;
 import RepositoryContent.Author;
@@ -56,23 +58,6 @@ public class main {
     		} else {
     			login = "null";
     		}
-    	}
-    	
-//    	Set<String> authors = authorMap.keySet();
-//    	for (String author : authors) {
-//    		List<CommitInfo> commitInfos = authorMap.get(author).getCommitList();
-//    		for (CommitInfo commitInfo : commitInfos) {
-//    			System.out.println(author + ", Additions: " + commitInfo.getAdditions() + ", Deletions: " + commitInfo.getDeletions());
-//    		}
-//    	}
-    	for (String author : authorMap.keySet()) {
-    		Map<Integer, Integer> commitTimeTable = CommitTimeAnalyzer.calculateCommitTimeTable(authorMap.get(author).getCommitList());
-    		List<Integer> workTimeTable = CommitTimeAnalyzer.calculateWorkHourDistribution(commitTimeTable);
-    		System.out.println(CommitTimeAnalyzer.calculateAvgCommitGap(authorMap.get(author).getCommitList()));
-    		System.out.println("9AM to 11AM" + ": " + workTimeTable.get(0));
-    		System.out.println("11AM to 1PM" + ": " + workTimeTable.get(1));
-    		System.out.println("1PM to 3PM" + ": " + workTimeTable.get(2));
-    		System.out.println("3PM to 5PM" + ": " + workTimeTable.get(3));
     	}
     }
 }

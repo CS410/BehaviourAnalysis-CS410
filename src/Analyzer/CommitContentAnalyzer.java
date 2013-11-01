@@ -49,12 +49,8 @@ public class CommitContentAnalyzer {
         }
     }
 
+    // Stub for method to determine what paths a commit is affecting
     public static void parseCommitDestination (List<CommitInfo> commitList, Map<String, Author> authorMap, Repository repository, Map<String, RevCommit> commitMap) {
-        RevWalk rw = new RevWalk(repository);
-        rw.setTreeFilter(AndTreeFilter.create(PathFilter.create("r2/r2/controllers"), TreeFilter.ANY_DIFF));
 
-        for (CommitInfo commit : commitList) {
-            System.out.println(commitMap.get(commit.getSha()).getTree());
-        }
     }
 }
