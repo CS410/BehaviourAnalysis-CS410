@@ -17,9 +17,9 @@ public class JGitAdapter {
 
 	private static final String REMOTE_URL = "https://github.com/reddit/reddit.git";
 	private Iterable<RevCommit> revCommits;
-	
-	public Map<String, RevCommit> commitMap;
-	public Repository localRepo;
+
+	private Map<String, RevCommit> commitMap;
+	private Repository localRepo;
 
 	public JGitAdapter() throws IOException, NoHeadException, JGitInternalException {
 	    File localPath = new File("reddit-repo");
