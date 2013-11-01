@@ -1,3 +1,4 @@
+import Analyzer.TimeAnalyzer;
 import GitCommitInterpreter.Author;
 import GitCommitInterpreter.CommitInfo;
 import GitCommitInterpreter.GitScraperUtils;
@@ -34,6 +35,11 @@ import java.util.Set;
 
 public class main {
     public static void main(String[] args) throws IOException, GitAPIException {
+    	// print output to file
+    	File file = new File("output.txt");
+    	FileOutputStream fis = new FileOutputStream(file);
+    	PrintStream out = new PrintStream(fis);
+    	System.setOut(out);
     	
     	final String OAUTH2TOKEN_STRING  = null; // change to your token value
         final String REMOTE_URL = "https://github.com/reddit/reddit.git";
@@ -47,68 +53,60 @@ public class main {
                 .call();
         org.eclipse.jgit.lib.Repository localRepo = new FileRepository(localPath.getPath()+"/.git");
         Git git = new Git(localRepo);
-        Iterable<RevCommit> commits = git.log().all().call();
+        Iterable<RevCommit> revCommits = git.log().all().call();
 
+        // Map of shas to revCommits
         Map<String, RevCommit> commitMap = new HashMap<String, RevCommit>();
-        for (RevCommit commit: commits) {
-            commitMap.put(ObjectId.toString(commit.getId()), commit);
-            System.out.println(ObjectId.toString(commit.getId()));
+        for (RevCommit revCommit: revCommits) {
+            commitMap.put(ObjectId.toString(revCommit.getId()), revCommit);
+            System.out.println(ObjectId.toString(revCommit.getId()) + revCommit);
         }
+        
+        GitScraperUtils scraper = new GitScraperUtils(localRepo);
 
-//        Map<String, Author> authorHash = new HashMap<String, Author>();
-//
-//        GitScraperUtils scraper = new GitScraperUtils(repo);
-//        for (RevCommit commit: commits) {
-//            //System.out.println(commit.getFullMessage());
-//
-//        	//System.out.println(commit.getAuthorIdent().getTimeZone());
-//        	if(commit.getAuthorIdent().getName().equals("Andre D")){
-//        		System.out.println("Authored: " + String.valueOf(commit.getAuthorIdent()) + ", Committed: " + String.valueOf(commit.getCommitterIdent()));
-//        	}
-//            //authorHash = scraper.addFileChanges(authorHash, commit);
-//        }
+    	// Connect using egit
+    	RepositoryService repoService = new RepositoryService();
+    	repoService.getClient().setOAuth2Token(OAUTH2TOKEN_STRING);
 
+    	CommitService commitService = new CommitService();
+    	commitService.getClient().setOAuth2Token(OAUTH2TOKEN_STRING);
 
-    	// print output to file
-//    	File file = new File("output.txt");
-//    	FileOutputStream fis = new FileOutputStream(file);
-//    	PrintStream out = new PrintStream(fis);
-//    	System.setOut(out);
-//
-//
-//    	RepositoryService repoService = new RepositoryService();
-//    	repoService.getClient().setOAuth2Token(OAUTH2TOKEN_STRING);
-//
-//    	CommitService commitService = new CommitService();
-//    	commitService.getClient().setOAuth2Token(OAUTH2TOKEN_STRING);
-//
-//        org.eclipse.egit.github.core.Repository repository = repoService.getRepository("reddit", "reddit");
-//    	List<Contributor> contributors = repoService.getContributors(repository, false);
-//    	List<RepositoryCommit> commitss = commitService.getCommits(repository);
-//
-//    	Map<String, Author> authors = new HashMap<String, Author>();
-//
-//    	for (Contributor contributor : contributors) {
-//    		String login = contributor.getLogin();
-//    		if (!authors.containsKey(login)) {
-//    			authors.put(login, new Author(login));
+        org.eclipse.egit.github.core.Repository repository = repoService.getRepository("reddit", "reddit");
+    	List<Contributor> contributors = repoService.getContributors(repository, false);
+    	List<RepositoryCommit> commits = commitService.getCommits(repository);
+
+    	// Map of authors
+    	Map<String, Author> authorMap = new HashMap<String, Author>();
+    	for (Contributor contributor : contributors) {
+    		String login = contributor.getLogin();
+    		if (!authorMap.containsKey(login)) {
+    			authorMap.put(login, new Author(login));
+    		}
+    	}
+
+    	// Add CommitInfo to each author
+    	for (RepositoryCommit commit : commits) {
+    		User author = commit.getAuthor();
+    		String login;
+    		if(author != null) {
+    			login = author.getLogin();
+    			CommitInfo commitInfo = new CommitInfo(commit);
+    			// Add commit stats to commitinfo
+    			if (commitMap.containsKey(commitInfo.getSha())) {
+    				scraper.addListOfFileChanges(commitInfo, commitMap.get(commitInfo.getSha()));
+    			}
+    			authorMap.get(login).addCommit(commitInfo);
+    		} else {
+    			login = "null";
+    		}
+    	}
+    	
+//    	Set<String> authors = authorMap.keySet();
+//    	for (String author : authors) {
+//    		List<CommitInfo> commitInfos = authorMap.get(author).getCommitList();
+//    		for (CommitInfo commitInfo : commitInfos) {
+//    			System.out.println(author + ", Additions: " + commitInfo.getAdditions() + ", Deletions: " + commitInfo.getDeletions());
 //    		}
-//    	}
-//
-//    	for (RepositoryCommit commit : commitss) {
-//    		User author = commit.getAuthor();
-//    		String login;
-//    		if(author != null) {
-//    			login = author.getLogin();
-//    			authors.get(login).addCommit(new CommitInfo(commit));
-//    		} else {
-//    			login = "null";
-//    		}
-//    	}
-//
-//    	Set<String> keys = authors.keySet();
-//    	for (String key : keys) {
-//    		System.out.println("Author: " + key + ", # of commits: " + authors.get(key).getCommitList().size());
 //    	}
     }
 
@@ -130,5 +128,4 @@ public class main {
             file.delete();
         }
     }
-
 }

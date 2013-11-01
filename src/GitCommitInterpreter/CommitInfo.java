@@ -17,6 +17,8 @@ public class CommitInfo {
 
 	private RepositoryCommit commit;
     private List<FileChanges> filesChangedList;
+    private int additions;
+    private int deletions;
 
     public CommitInfo(RepositoryCommit commit) {
     	this.commit = commit;
@@ -43,12 +45,20 @@ public class CommitInfo {
     	return commit.getCommit().getCommitter().getDate();
     }
     
+    public void setAdditions(int additions) {
+    	this.additions = additions;
+    }
+    
     public int getAdditions() {
-    	return commit.getStats().getAdditions();
+    	return additions;
+    }
+    
+    public void setDeletions(int deletions) {
+    	this.deletions = deletions;
     }
     
     public int getDeletions() {
-    	return commit.getStats().getDeletions();
+    	return deletions;
     }
     
     // Code for jgit below
