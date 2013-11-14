@@ -21,6 +21,47 @@ public class CommitPatternAnalyzer {
 	private List<Integer> avgRunningAdditions = new ArrayList<Integer>();
 	private List<Integer> avgRunningDeletions = new ArrayList<Integer>();
 	private List<Integer> avgRunningCombined = new ArrayList<Integer>();
+
+
+    //Alan Stuff - In chronological order
+    private List<Integer> runningAvgCombined = new ArrayList();
+    private List<Double> runningStdevCombined = new ArrayList<Double>();
+
+
+    public void calcRunningAverages(Map<String, Author> authorMap) {
+        for (String authors : authorMap.keySet()) {
+            list = authorMap.get(authors).getCommitList();
+            int count = 1;
+            int s1 = 0;
+            int s2 = 0;
+            for (int i = list.size() - 1; i >=0; i ++) {
+                CommitInfo info = list.get(i);
+                int currentSum;
+                if (i + 1 == list.size()) {
+                    currentSum = info.getAdditions() + info.getDeletions();
+                    s1 = currentSum;
+                    s2 = currentSum*currentSum;
+
+                    runningAvgCombined.add(currentSum);
+                    runningStdevCombined.add(0.0);
+
+                }
+                else {
+                    currentSum = info.getAdditions() + info.getDeletions();
+                    s1 = s1 + currentSum;
+                    s2 = s2 + currentSum*currentSum;
+
+                    int inRoot = count * s2 - s1*s1;
+                    runningAvgCombined.add(s1/count);
+                    runningStdevCombined.add(Math.sqrt(inRoot)/count);
+                }
+                count++;
+
+            }
+
+        }
+
+    }
 	
 	public void calcAvgAdditions(Map<String, Author> authorMap)
 	{
