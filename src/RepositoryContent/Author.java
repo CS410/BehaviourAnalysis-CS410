@@ -24,6 +24,9 @@ public class Author {
     private CommitContentMetrics commitContentMetrics;
     private CommitPatternMetrics commitPatternMetrics;
     private CommitTimeMetrics commitTimeMetrics;
+
+    private List<Integer> runningAvgCombined = new ArrayList();
+    private List<Double> runningStdevCombined = new ArrayList<Double>();
     
     public Author(String login) {
     	this.login = login;
@@ -66,6 +69,23 @@ public class Author {
 
     public CommitTimeMetrics getCommitTimeMetrics() {
         return this.commitTimeMetrics;
+    }
+
+    public List<Integer> getRunningAvgCombined() {
+        return this.runningAvgCombined;
+
+    }
+    public List<Double> getRunningStdevCombined() {
+        return this.runningStdevCombined;
+    }
+
+    public void setRunningAvgCombined(List<Integer> avgs) {
+        runningAvgCombined = avgs;
+
+
+    }
+    public void setRunningStdevCombined(List<Double> stdevs) {
+        runningStdevCombined = stdevs;
     }
 
 }
