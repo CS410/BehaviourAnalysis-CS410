@@ -1,8 +1,10 @@
+var developerkey = "kemitche";
+
 var WIDTH = window.innerWidth,
     HEIGHT = window.innerHeight,
     RADIUS = Math.min(WIDTH, HEIGHT) / 2.5; // Scaling the radius 
 
-var DAY_DURATION = 20000,
+var DAY_DURATION = 10000,
 	DAY_FREQUENCY = 500,
 	DAY_INDEX = 0;
 
@@ -31,6 +33,22 @@ var svg = d3.select("body").append("svg")
     .attr("height", HEIGHT);
 
 //////////////////////////////////////////////////////////////////////////
+// DATA
+//////////////////////////////////////////////////////////////////////////
+
+var timewedgesum = 0;
+var timewedgeindex = 0;
+
+var commitlist = jsondata[developerkey].commitList;
+
+// Scaling functions for seconds and duration plotting
+var scaleSecs = d3.scale.linear().domain([0, DAY_FREQUENCY-1]).range([0, 2 * Math.PI]);
+var scaleDur  = d3.scale.linear().domain([1, RADIUS]).range([0, DAY_DURATION]);
+var colourScale = d3.scale.linear().domain([0,100]).range([0, 2*Math.PI]);
+
+
+
+//////////////////////////////////////////////////////////////////////////
 // TEST DATA
 //////////////////////////////////////////////////////////////////////////
 
@@ -43,35 +61,49 @@ var arrayfallback = [	[0, 20, 40, 50, 55, 57, 60, 1000],
 						[10,20,30,40,50,60,70,80] ]
 var fallbackindex = 0;
 var array = arrayfallback[fallbackindex].slice(0);	
-
-var timepiesum = 0;
-var timepieindex = 0;
+var colourdata = [[0,25,COLOURS[RED]], [25,50,COLOURS[BLUE]], [50,75,COLOURS[YELLOW]], [75,100,COLOURS[GRAY]]];
 
 //////////////////////////////////////////////////////////////////////////
 // VISUALIZATION BEGIN
 //////////////////////////////////////////////////////////////////////////	
 
-// Setup clockhand once, through enter	
 
-svg.selectAll("#timepie").data(getNow)
+// Setup objects	
+var mvcpiearc = d3.svg.arc()
+	.innerRadius(RADIUS)
+	.outerRadius(240)
+	.startAngle(function(d){return colourScale(d[0]);})
+	.endAngle(function(d){return colourScale(d[1]);});
+
+
+svg.selectAll(".mvcpie").data(colourdata)
 	.enter().append("path")
-	.attr("d", timepiearc)
+	.attr("d", mvcpiearc)
+	.attr("class", "mvcpie")
+	.attr("fill", function(d){return d[2];})
+	.attr("opacity", 0.1)
+	.attr("transform", "translate("+WIDTH/2+","+HEIGHT/2+")");
+
+
+svg.selectAll("#timewedge").data(getNow)
+	.enter().append("path")
+	.attr("id", "timewedge")
+	.attr("d", timewedgearc)
 	.attr("opacity", 0.3)
-	.attr("id", "timepie")
 	.attr("stroke", "black")
 	.attr("stroke-width", 0)
 	.attr("fill", "none")
-
 	.attr("transform", "translate(" + WIDTH / 2 + "," + HEIGHT / 2 + ")");
 
 svg.selectAll("#clockhand").data(getNow)
 	.enter().append("path")
-	.style("fill", "black")
-	.attr("d", clockarc)
 	.attr("id", "clockhand")
+	.attr("d", clockarc)
 	.attr("stroke", "black")
 	.attr("stroke-width", 0)
+	.attr("fill", "black")
 	.attr("transform", "translate(" + WIDTH / 2 + "," + HEIGHT / 2 + ")");
+
 
 	
 // Setup outside border circle
@@ -115,35 +147,31 @@ d3.timer(function() {
 	clockhand.attr("d", clockarc)
 		.attr("stroke", "black")
 		.attr("stroke-width", 5);
-	
+	//console.log(dataclock[0].value%500);
+
 	if (dataclock[0].value%DAY_FREQUENCY >= array[0]) {
+		//console.log(dataclock[0].value%500 + " vs " + array[0]);
 		plotCommit(DAY_INDEX, array[0]);
 		
-		var datacommit = getCirclerad();
+		var commitdetails = getCommitDetails();
 		var commitcircle = svg.select("#commitcircle")
 			.transition()
 			.duration(500)
-			.attr("r", datacommit[0].radius)
-			.attr("fill", datacommit[0].colour);
+			.attr("r", commitdetails[0].radius)
+			.attr("fill", commitdetails[0].colour);
 		
-		var datapie = getTimepie(array[0]);
-		var timepie = svg.select("#timepie").data(datapie);
-		timepie.transition()
+		var datapie = getTimewedge(array[0]);
+		var timewedge = svg.select("#timewedge").data(datapie);
+		timewedge.transition()
 			.duration(500)
-			.attr("d", timepiearc)
-			.attr("fill", datacommit[0].colour)
+			.attr("d", timewedgearc)
+			.attr("fill", commitdetails[0].colour)
 			.attr("stroke", "black")
 			.attr("stroke-width", 0);
 		
-
-		
-		
 		array.shift();
 	}
-	
-
-	
-});
+}, 1);
 
 //////////////////////////////////////////////////////////////////////////
 // DRAWING/UPDATING FUNCTIONS
@@ -195,9 +223,6 @@ function plotCommit(circleindex, ms) {
 // UTILITY FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-// Scaling functions for seconds and duration plotting
-var scaleSecs = d3.scale.linear().domain([0, DAY_FREQUENCY-1]).range([0, 2 * Math.PI]);
-var scaleDur  = d3.scale.linear().domain([1, RADIUS]).range([0, DAY_DURATION]);
 
 // Arc function to update clock hand
 var clockarc = d3.svg.arc()
@@ -206,7 +231,7 @@ var clockarc = d3.svg.arc()
     .innerRadius(0)
     .outerRadius(RADIUS);
 
-var timepiearc = d3.svg.arc()
+var timewedgearc = d3.svg.arc()
     .startAngle(function(d) { return scaleSecs(d.start); })
     .endAngle(function(d) { return scaleSecs(d.end); })
 	.innerRadius(0)
@@ -227,17 +252,17 @@ function getNow() {
 		{ value: t - t0 }
 	];
 }
-function getTimepie(time) {
-	timepieindex++;
-	timepiesum = timepiesum + time;
+function getTimewedge(time) {
+	timewedgeindex++;
+	timewedgesum = timewedgesum + time;
 	
 	return [
-		{ start: (timepiesum/timepieindex)-20,
-		  end: 	(timepiesum/timepieindex)+20 }	
+		{ start: (timewedgesum/timewedgeindex)-20,
+		  end: 	(timewedgesum/timewedgeindex)+20 }	
 	]
 }
 
-function getCirclerad() {
+function getCommitDetails() {
 	return [
 		{ radius: Math.floor(Math.random()*RADIUS),
 		  colour: d3.rgb(Math.floor(Math.random()*255),	Math.floor(Math.random()*255), Math.floor(Math.random()*255))
