@@ -37,7 +37,7 @@ public class main {
     	File file = new File("output.json");
     	FileOutputStream fis = new FileOutputStream(file);
     	PrintStream out = new PrintStream(fis);
-    	System.setOut(out);
+    	//System.setOut(out);
     	
         JGitAdapter jgitAdapter = new JGitAdapter();
         EGitAdapter egitAdapter = new EGitAdapter();
@@ -65,8 +65,19 @@ public class main {
     	}
     	
     	// Prints Json to file
+
     	CommitPatternAnalyzer.calcRunningAverages(authorMap);
     	JSONObject jsonMap = JSONConvert.mapToJSONByDay(authorMap);
-    	System.out.println(jsonMap.toString());
+
+        for (String author : authorMap.keySet()) {
+            Author auth = authorMap.get(author);
+            System.out.println(auth.getName());
+            for (CommitInfo commitList: auth.getCommitList()) {
+                System.out.println(commitList.getCommittedDate());
+            }
+        }
+        System.setOut(out);
+
+        System.out.println(jsonMap.toString());
     }
 }

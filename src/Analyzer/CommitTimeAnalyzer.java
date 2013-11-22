@@ -20,6 +20,7 @@ public class CommitTimeAnalyzer {
 		List<CommitInfo> commitList = author.getCommitList();
 		Map<Integer, Integer> commitTimeTable = calculateCommitTimeTable(commitList);
 		commitTimeMetrics.setAverageCommitGap(calculateAvgCommitGap(commitList));
+
 		commitTimeMetrics.setCommitTimeTable(commitTimeTable);
 		commitTimeMetrics.setWorkHourDistribution(calculateWorkHourDistribution(commitTimeTable));
 		calculateRunningAvg(author, commitTimeMetrics);
@@ -28,7 +29,7 @@ public class CommitTimeAnalyzer {
 	private static int calculateAvgCommitGap(List<CommitInfo> commitList) {
 		long total = 0;
 		long prev = 0;
-		Collections.reverse(commitList);
+		//Collections.reverse(commitList);
 		for (CommitInfo commit : commitList) {
 			long curr = commit.getCommittedDate().getTime() / 1000;
 			if (prev != 0 && curr != 0) {

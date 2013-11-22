@@ -5,6 +5,7 @@ import RepositoryContent.Author;
 import RepositoryContent.CommitInfo;
 import RepositoryContent.FileChanges;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.text.SimpleDateFormat;
@@ -33,7 +34,6 @@ public class JSONConvert {
 	private static JSONObject convertCommitList(CommitInfo commitInfo) {
 
         JSONObject commitInfoJSON = new JSONObject();
-        JSONObject filesChangedJSON = new JSONObject();
 
 
         commitInfoJSON.put("authorLogin", commitInfo.getAuthorLogin());
@@ -90,6 +90,24 @@ public class JSONConvert {
 
     }
 
+    public static boolean compareDates(Date d1, Date d2) {
+
+        Calendar c1 = Calendar.getInstance();
+        Calendar c2 = Calendar.getInstance();
+        c1.setTime(d1);
+        c2.setTime(d2);
+
+        if (c1.get(Calendar.YEAR) != c2.get(Calendar.YEAR))
+            return false;
+        if (c1.get(Calendar.MONTH) != c2.get(Calendar.MONTH))
+            return false;
+        if (c1.get(Calendar.DAY_OF_MONTH) != c2.get(Calendar.DAY_OF_MONTH)) {
+            return false;
+        }
+        return true;
+
+    }
+
 
     /**
      * Converts a Map<String, Author> to a JSONObject with a map of commits
@@ -115,61 +133,62 @@ public class JSONConvert {
 
             List<CommitInfo> commitList = authorObject.getCommitList();
             int count = 0;
-            Date currentCommitDate = new Date();
-            int currentCommitCount = commitList.size()-1;
+            int commitSize = commitList.size();
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             JSONObject commitByDayJSON = new JSONObject();
 
-            CommitInfo commitInfoObject = commitList.get(currentCommitCount);
+            Date currentDate = commitList.get(commitList.size()-1).getCommittedDate();
+            Date lastDate = commitList.get(0).getCommittedDate();
+           // authorJSON.put("firstCommit", authorObject.getEmail());
 
-            while(currentCommitCount >=0) {
+
+
+            Calendar incrementCalendar = Calendar.getInstance();
+            incrementCalendar.setTime(currentDate);
+
+            System.out.println(author);
+            System.out.println("Number of commits: " + commitList.size());
+            System.out.println("First: " + currentDate.toString());
+            authorJSON.put("firstCommit", sdf.format(currentDate));
+
+            System.out.println("Last: " + lastDate.toString());
+            while (incrementCalendar.getTime().before(lastDate) || compareDates(incrementCalendar.getTime(), lastDate)) {
+                if (!(count < commitList.size())) {
+                    System.out.println(count + " " + commitList.size());
+                    break;
+                }
                 JSONObject dayJSON = new JSONObject();
+                CommitInfo commitInfo = commitList.get(commitSize-count-1);
 
-                if (count == 0) {
-                    currentCommitDate = commitList.get(currentCommitCount).getAuthoredDate();
+                System.out.println(incrementCalendar.getTime().toString());
+                JSONArray commitListJSON = new JSONArray();
 
-                }
-                else {
-                    Calendar tempCalendar = Calendar.getInstance();
-                    tempCalendar.setTime(currentCommitDate);
-                    tempCalendar.add(Calendar.DAY_OF_YEAR, 1);
-                    currentCommitDate = tempCalendar.getTime();
+                while (compareDates(incrementCalendar.getTime(), commitInfo.getCommittedDate())) {
 
-                }
-
-                Calendar currentCal = Calendar.getInstance();
-                currentCal.setTime(currentCommitDate);
-
-                Calendar commitCal = Calendar.getInstance();
-                commitCal.setTime(commitInfoObject.getAuthoredDate());
-
-                while (compareDates(currentCal, commitCal) == 0 ) {
-                    JSONObject commitJSON = new JSONObject();
+                    //JSONObject commitJSON = new JSONObject();
+                    JSONObject commitJSON = convertCommitList(commitInfo);
                     commitJSON.put("average", authorObject.getRunningAvgCombined().get(count));
                     commitJSON.put("standardDeviation", authorObject.getRunningStdevCombined().get(count));
                     commitJSON.put("timeAverage", authorObject.getCommitTimeMetrics().getRunningAvg().get(count));
                     commitJSON.put("timeStdev", authorObject.getCommitTimeMetrics().getRunningStdev().get(count));
-                    commitJSON.put("commitInfo", convertCommitList(commitInfoObject));
-                    dayJSON.put(commitInfoObject.getAuthoredDate(), commitJSON);
+                    //commitJSON.put("commitInfo", convertCommitList(commitInfo));
+                    commitListJSON.add(commitJSON);
+                    //dayJSON.put(commitInfo.getCommittedDate(), commitJSON);
 
                     count++;
-                    currentCommitCount--;
-
-                    if (currentCommitCount >=0) {
-                        commitInfoObject = commitList.get(currentCommitCount);
-                        commitCal.setTime(commitInfoObject.getAuthoredDate());
+                    if (count < commitList.size()) {
+                        commitInfo = commitList.get(commitSize - count-1);
                     }
                     else {
                         break;
                     }
                 }
 
-                commitByDayJSON.put(sdf.format(currentCommitDate), dayJSON);
+                commitByDayJSON.put(sdf.format(incrementCalendar.getTime()), commitListJSON);
+                incrementCalendar.add(Calendar.DATE, 1);
 
-                if (compareDates(currentCal, commitCal) > 0) {
-                    break;
-                }
             }
+            System.out.println("commits made: " + count );
 
             authorJSON.put("commitList", commitByDayJSON);
             authorMapJSON.put(authorObject.getLogin(), authorJSON);

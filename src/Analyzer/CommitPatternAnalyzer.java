@@ -59,7 +59,7 @@ public class CommitPatternAnalyzer {
 
             authorObject.setRunningAvgCombined(runningAvgCombined);
             authorObject.setRunningStdevCombined(runningStdevCombined);
-            authorMap.put(author, authorObject);
+            //authorMap.put(author, authorObject);
 
         }
         return authorMap;
