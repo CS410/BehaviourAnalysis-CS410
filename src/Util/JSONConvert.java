@@ -9,6 +9,7 @@ import org.json.simple.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -82,40 +83,48 @@ public class JSONConvert {
      */
     @SuppressWarnings("unchecked")
 	public static JSONObject mapToJSONByDay(Map<String, Author> authorCommits) {
-        JSONObject authorMapJSON = new JSONObject();
+        // JSONObject that holds a map of authors along with their commits
+    	JSONObject authorMapJSON = new JSONObject();
 
         for (String author : authorCommits.keySet() ) {
+        	// JSONObject that holds an author and their commits
             JSONObject authorJSON = new JSONObject();
 
             Author authorObject = authorCommits.get(author);
-            
-            CommitTimeAnalyzer.generateCommitTimeMetrics(authorObject);
-
             authorJSON.put("name", authorObject.getName());
             authorJSON.put("login", authorObject.getLogin());
             authorJSON.put("email", authorObject.getEmail());
+            
+            // Generate the commit time metrics for the given author
+            CommitTimeAnalyzer.generateCommitTimeMetrics(authorObject);
 
             List<CommitInfo> commitList = authorObject.getCommitList();
-            int count = 0;
-            int commitSize = commitList.size();
+            // Reserve the commit list to chronological order
+            Collections.reverse(commitList);
+            
+            // Format dates as yyyy-mm-ddd
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            JSONObject commitByDayJSON = new JSONObject();
-
-            Date currentDate = commitList.get(commitList.size()-1).getCommittedDate();
-            Date lastDate = commitList.get(0).getCommittedDate();
-
             Calendar incrementCalendar = Calendar.getInstance();
+
+            // Set the current date as the date of the first commit
+            Date currentDate = commitList.get(0).getCommittedDate();
+            // Set the last date as the date of the last commit
+            Date lastDate = commitList.get(commitList.size()-1).getCommittedDate();
+
+            // Set the first commit date to the calendar
             incrementCalendar.setTime(currentDate);
 
             authorJSON.put("firstCommit", sdf.format(currentDate));
-
-            System.out.println("Last: " + lastDate.toString());
+            
+            // Map of commits sorted according to date
+            JSONObject commitByDayJSON = new JSONObject();
+            
+            int count = 0;
             while (incrementCalendar.getTime().before(lastDate) || compareDates(incrementCalendar.getTime(), lastDate)) {
-                CommitInfo commitInfo = commitList.get(commitSize-count-1);
-
-                System.out.println(incrementCalendar.getTime().toString());
+            	// Array of commits of a given day
                 JSONArray commitListJSON = new JSONArray();
-
+                CommitInfo commitInfo = commitList.get(count);
+                
                 while (compareDates(incrementCalendar.getTime(), commitInfo.getCommittedDate())) {
                     JSONObject commitJSON = convertCommitList(commitInfo);
                     commitJSON.put("average", authorObject.getRunningAvgCombined().get(count));
@@ -125,14 +134,17 @@ public class JSONConvert {
                     commitListJSON.add(commitJSON);
 
                     count++;
+                    // Get the next commit in the list
                     if (count < commitList.size()) {
-                        commitInfo = commitList.get(commitSize - count-1);
+                        commitInfo = commitList.get(count);
                     }
                     else {
                         break;
                     }
                 }
+                // Insert the list of commits of a certain day into the commit map
                 commitByDayJSON.put(sdf.format(incrementCalendar.getTime()), commitListJSON);
+                // Set the calendar to the next day
                 incrementCalendar.add(Calendar.DATE, 1);
             }
             authorJSON.put("commitList", commitByDayJSON);
