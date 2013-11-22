@@ -24,7 +24,6 @@ public class JGitAdapter {
 	public JGitAdapter() throws IOException, NoHeadException, JGitInternalException {
 	    File localPath = new File("reddit-repo");
 	    delete(localPath);
-	    System.out.println("Cloning from " + REMOTE_URL + " to " + localPath);
 	    Git.cloneRepository()
 	            .setURI(REMOTE_URL)
 	            .setDirectory(localPath)
@@ -47,7 +46,6 @@ public class JGitAdapter {
         Map<String, RevCommit> commitMap = new HashMap<String, RevCommit>();
         for (RevCommit revCommit: revCommits) {
             commitMap.put(ObjectId.toString(revCommit.getId()), revCommit);
-            System.out.println(ObjectId.toString(revCommit.getId()) + revCommit);
         }
         return commitMap;
 	}

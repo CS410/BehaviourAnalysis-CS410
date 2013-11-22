@@ -25,7 +25,7 @@ public class Author {
     private CommitPatternMetrics commitPatternMetrics;
     private CommitTimeMetrics commitTimeMetrics;
 
-    private List<Integer> runningAvgCombined = new ArrayList();
+    private List<Integer> runningAvgCombined = new ArrayList<Integer>();
     private List<Double> runningStdevCombined = new ArrayList<Double>();
     
     public Author(String login) {
@@ -81,8 +81,6 @@ public class Author {
 
     public void setRunningAvgCombined(List<Integer> avgs) {
         runningAvgCombined = avgs;
-
-
     }
     public void setRunningStdevCombined(List<Double> stdevs) {
         runningStdevCombined = stdevs;

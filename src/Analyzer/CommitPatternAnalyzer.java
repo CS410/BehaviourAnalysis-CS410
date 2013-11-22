@@ -34,7 +34,6 @@ public class CommitPatternAnalyzer {
             int s1 = 0;
             int s2 = 0;
             for (int i = list.size() - 1; i >=0; i --) {
-                //System.out.println(i);
                 CommitInfo info = list.get(i);
                 int currentSum;
                 if (i + 1 == list.size()) {
@@ -44,7 +43,6 @@ public class CommitPatternAnalyzer {
 
                     runningAvgCombined.add(currentSum);
                     runningStdevCombined.add(0.0);
-
                 }
                 else {
                     currentSum = info.getAdditions() + info.getDeletions();

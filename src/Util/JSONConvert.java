@@ -1,9 +1,10 @@
 package Util;
 
+import Analyzer.CommitTimeAnalyzer;
 import RepositoryContent.Author;
 import RepositoryContent.CommitInfo;
 import RepositoryContent.FileChanges;
-import org.eclipse.egit.github.core.util.DateUtils;
+
 import org.json.simple.JSONObject;
 
 import java.text.SimpleDateFormat;
@@ -22,7 +23,14 @@ import java.util.Map;
 public class JSONConvert {
 
 
-    private static JSONObject convertCommitList(CommitInfo commitInfo) {
+	/**
+	 * Converts a CommitInfo object into a JSON Object.
+	 * 
+	 * @param commitInfo
+	 * @return JSONObject
+	 */
+    @SuppressWarnings("unchecked")
+	private static JSONObject convertCommitList(CommitInfo commitInfo) {
 
         JSONObject commitInfoJSON = new JSONObject();
         JSONObject filesChangedJSON = new JSONObject();
@@ -30,39 +38,44 @@ public class JSONConvert {
 
         commitInfoJSON.put("authorLogin", commitInfo.getAuthorLogin());
         commitInfoJSON.put("authoredDate", commitInfo.getAuthoredDate().toString());
-//        commitInfoJSON.put("committerLogin", commitInfo.getCommitterLogin());
         commitInfoJSON.put("committedDate", commitInfo.getCommittedDate().toString());
         commitInfoJSON.put("additions", commitInfo.getAdditions());
         commitInfoJSON.put("deletions", commitInfo.getDeletions());
+        commitInfoJSON.put("authoredDateInSeconds", commitInfo.getAuthoredDateInSeconds());
 
-        List<FileChanges> fileChangesList = commitInfo.getFilesChanged();
-        int commitCount = 0;
-
-        for (FileChanges changes: fileChangesList) {
-            JSONObject fileChangesJSON = new JSONObject();
-            JSONObject child = new JSONObject();
-            fileChangesJSON.put("filename", changes.getFilename());
-
-            int count = 0;
-            for (String lineAdded: changes.getLinesAdded()) {
-                child.put(count, lineAdded);
-                count++;
-            }
-            fileChangesJSON.put("linesAdded", child);
-
-            child = new JSONObject();
-            count = 0;
-
-            for (String lineDeleted: changes.getLinesDeleted()) {
-                child.put(count, lineDeleted);
-                count++;
-            }
-            fileChangesJSON.put("linesDeleted", child);
-            filesChangedJSON.put(commitCount, fileChangesJSON);
-            commitCount++;
-        }
-
-        commitInfoJSON.put("filesChanged", filesChangedJSON);
+        commitInfoJSON.put("modelLines", DirectoryScraper.getDirectoryDistribution(commitInfo).get("Model"));
+        commitInfoJSON.put("controllerLines", DirectoryScraper.getDirectoryDistribution(commitInfo).get("Controller"));
+        commitInfoJSON.put("viewLines", DirectoryScraper.getDirectoryDistribution(commitInfo).get("View"));
+        commitInfoJSON.put("otherLines", DirectoryScraper.getDirectoryDistribution(commitInfo).get("Other"));
+        
+//        List<FileChanges> fileChangesList = commitInfo.getFilesChanged();
+//        int commitCount = 0;
+//
+//        for (FileChanges changes: fileChangesList) {
+//            JSONObject fileChangesJSON = new JSONObject();
+//            JSONObject child = new JSONObject();
+//            fileChangesJSON.put("filename", changes.getFilename());
+//
+//            int count = 0;
+//            for (String lineAdded: changes.getLinesAdded()) {
+//                child.put(count, lineAdded);
+//                count++;
+//            }
+//            fileChangesJSON.put("linesAdded", child);
+//
+//            child = new JSONObject();
+//            count = 0;
+//
+//            for (String lineDeleted: changes.getLinesDeleted()) {
+//                child.put(count, lineDeleted);
+//                count++;
+//            }
+//            fileChangesJSON.put("linesDeleted", child);
+//            filesChangedJSON.put(commitCount, fileChangesJSON);
+//            commitCount++;
+//        }
+//
+//        commitInfoJSON.put("filesChanged", filesChangedJSON);
 
         return commitInfoJSON;
     }
@@ -78,14 +91,23 @@ public class JSONConvert {
     }
 
 
-    public static JSONObject mapToJSONByDay(Map<String, Author> authorCommits) {
+    /**
+     * Converts a Map<String, Author> to a JSONObject with a map of commits
+     * ordered by day.
+     * 
+     * @param authorCommits  map of authors
+     * @return JSONObject
+     */
+    @SuppressWarnings("unchecked")
+	public static JSONObject mapToJSONByDay(Map<String, Author> authorCommits) {
         JSONObject authorMapJSON = new JSONObject();
-
 
         for (String author : authorCommits.keySet() ) {
             JSONObject authorJSON = new JSONObject();
 
             Author authorObject = authorCommits.get(author);
+            
+            CommitTimeAnalyzer.generateCommitTimeMetrics(authorObject);
 
             authorJSON.put("name", authorObject.getName());
             authorJSON.put("login", authorObject.getLogin());
@@ -121,16 +143,12 @@ public class JSONConvert {
                 Calendar commitCal = Calendar.getInstance();
                 commitCal.setTime(commitInfoObject.getAuthoredDate());
 
-                //System.out.println("Current time: " + currentCal.getTime() + " Commit Time: " + commitCal.getTime());
-
                 while (compareDates(currentCal, commitCal) == 0 ) {
-                    //System.out.println(compareDates(currentCal, commitCal));
-                    //System.out.println("Count: "+count);
-                    //System.out.println ("CurrentCommitCount: " + currentCommitCount);
-
                     JSONObject commitJSON = new JSONObject();
                     commitJSON.put("average", authorObject.getRunningAvgCombined().get(count));
                     commitJSON.put("standardDeviation", authorObject.getRunningStdevCombined().get(count));
+                    commitJSON.put("timeAverage", authorObject.getCommitTimeMetrics().getRunningAvg().get(count));
+                    commitJSON.put("timeStdev", authorObject.getCommitTimeMetrics().getRunningStdev().get(count));
                     commitJSON.put("commitInfo", convertCommitList(commitInfoObject));
                     dayJSON.put(commitInfoObject.getAuthoredDate(), commitJSON);
 
@@ -140,12 +158,10 @@ public class JSONConvert {
                     if (currentCommitCount >=0) {
                         commitInfoObject = commitList.get(currentCommitCount);
                         commitCal.setTime(commitInfoObject.getAuthoredDate());
-
                     }
                     else {
                         break;
                     }
-
                 }
 
                 commitByDayJSON.put(sdf.format(currentCommitDate), dayJSON);
@@ -157,16 +173,13 @@ public class JSONConvert {
 
             authorJSON.put("commitList", commitByDayJSON);
             authorMapJSON.put(authorObject.getLogin(), authorJSON);
-            //System.out.println("Averages: " + authorObject.getRunningAvgCombined().size());
-            //System.out.println("Standard Deviation: " + authorObject.getRunningStdevCombined().size());
-            //System.out.println("Commit Size: " + commitList.size());
-
         }
 
         return authorMapJSON;
     }
 
-    public static JSONObject mapToJSON(Map<String, Author> authorCommits) {
+    @SuppressWarnings("unchecked")
+	public static JSONObject mapToJSON(Map<String, Author> authorCommits) {
         JSONObject authorMapJSON = new JSONObject();
 
         JSONObject childJSON;
@@ -196,7 +209,6 @@ public class JSONConvert {
             }
             authorJSON.put("standardDeviations", childJSON);
 
-
             List<CommitInfo> commitList = authorObject.getCommitList();
 
             JSONObject commitJSON = new JSONObject();
@@ -208,12 +220,6 @@ public class JSONConvert {
             authorJSON.put("commitList", commitJSON);
 
             authorMapJSON.put(authorObject.getLogin(), authorJSON);
-            //System.out.println("Averages: " + authorObject.getRunningAvgCombined().size());
-            //System.out.println("Standard Deviation: " + authorObject.getRunningStdevCombined().size());
-            //System.out.println("Commit Size: " + commitList.size());
-
-
-
         }
 
         return authorMapJSON;

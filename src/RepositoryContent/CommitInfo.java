@@ -1,7 +1,9 @@
 package RepositoryContent;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.eclipse.egit.github.core.RepositoryCommit;
@@ -67,5 +69,12 @@ public class CommitInfo {
 
     public List<FileChanges> getFilesChanged() {
     	return filesChangedList;
+    }
+    
+    public int getAuthoredDateInSeconds() {
+    	Date authoredDate = this.getAuthoredDate();
+    	Calendar calendar = GregorianCalendar.getInstance();
+    	calendar.setTime(authoredDate);
+    	return calendar.get(Calendar.SECOND) + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.HOUR_OF_DAY) * 3600;
     }
 }

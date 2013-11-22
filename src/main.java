@@ -1,16 +1,20 @@
 import Analyzer.CommitContentAnalyzer;
+import Analyzer.CommitPatternAnalyzer;
 import Analyzer.CommitTimeAnalyzer;
 import Metrics.CommitContentMetrics;
 import RepositoryAdapters.EGitAdapter;
 import RepositoryAdapters.JGitAdapter;
 import RepositoryContent.Author;
 import RepositoryContent.CommitInfo;
+import Util.DirectoryScraper;
 import Util.FileChangesScraper;
+import Util.JSONConvert;
 
 import org.eclipse.egit.github.core.RepositoryCommit;
 import org.eclipse.egit.github.core.User;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -30,7 +34,7 @@ import java.util.Map;
 public class main {
     public static void main(String[] args) throws IOException, GitAPIException {
     	// print output to file
-    	File file = new File("output.txt");
+    	File file = new File("output.json");
     	FileOutputStream fis = new FileOutputStream(file);
     	PrintStream out = new PrintStream(fis);
     	System.setOut(out);
@@ -59,5 +63,10 @@ public class main {
     			login = "null";
     		}
     	}
+    	
+    	// Prints Json to file
+    	CommitPatternAnalyzer.calcRunningAverages(authorMap);
+    	JSONObject jsonMap = JSONConvert.mapToJSONByDay(authorMap);
+    	System.out.println(jsonMap.toString());
     }
 }

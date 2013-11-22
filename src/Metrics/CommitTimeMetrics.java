@@ -1,5 +1,8 @@
 package Metrics;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Henry
@@ -8,6 +11,50 @@ package Metrics;
  * To change this template use File | Settings | File Templates.
  */
 public class CommitTimeMetrics {
-    // Stubbed out class for commit time metrics
-    // Currently CommitTimeAnalyzer is printing out the metrics
+	
+	private int averageCommitGap;
+	private Map<Integer, Integer> commitTimeTable;
+	private List<Integer> workHourDistribution;
+	private List<Integer> runningAvg;
+	private List<Double> runningStdev;
+	
+	public void setAverageCommitGap(int averageCommitGap) {
+		this.averageCommitGap = averageCommitGap;
+	}
+	
+	public void setCommitTimeTable(Map<Integer, Integer> commitTimeTable) {
+		this.commitTimeTable = commitTimeTable;
+	}
+	
+	public void setWorkHourDistribution(List<Integer> workHourDistribution) {
+		this.workHourDistribution = workHourDistribution;
+	}
+	
+	public void setRunningAvg(List<Integer> runningAvg) {
+		this.runningAvg = runningAvg;
+	}
+	
+	public void setRunningStdev(List<Double> runningStdev) {
+		this.runningStdev = runningStdev;
+	}
+	
+	public int getAverageCommitGap() {
+		return this.averageCommitGap;
+	}
+	
+	public Map<Integer, Integer> getCommitTimeTable() {
+		return this.commitTimeTable;
+	}
+	
+	public List<Integer> getWorkHourDistribution() {
+		return this.workHourDistribution;
+	}
+	
+	public List<Integer> getRunningAvg() {
+		return this.runningAvg;
+	}
+	
+	public List<Double> getRunningStdev() {
+		return this.runningStdev;
+	}
 }
