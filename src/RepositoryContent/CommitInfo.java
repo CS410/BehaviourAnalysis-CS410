@@ -71,10 +71,10 @@ public class CommitInfo {
     	return filesChangedList;
     }
     
-    public int getAuthoredDateInSeconds() {
-    	Date authoredDate = this.getAuthoredDate();
+    public int getCommittedDateInSeconds() {
+    	Date committedDate = this.getAuthoredDate();
     	Calendar calendar = GregorianCalendar.getInstance();
-    	calendar.setTime(authoredDate);
+    	calendar.setTime(committedDate);
     	return calendar.get(Calendar.SECOND) + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.HOUR_OF_DAY) * 3600;
     }
 }

@@ -41,7 +41,7 @@ public class JSONConvert {
         commitInfoJSON.put("committedDate", commitInfo.getCommittedDate().toString());
         commitInfoJSON.put("additions", commitInfo.getAdditions());
         commitInfoJSON.put("deletions", commitInfo.getDeletions());
-        commitInfoJSON.put("authoredDateInSeconds", commitInfo.getAuthoredDateInSeconds());
+        commitInfoJSON.put("committedDateInSeconds", commitInfo.getCommittedDateInSeconds());
 
         commitInfoJSON.put("modelLines", DirectoryScraper.getDirectoryDistribution(commitInfo).get("Model"));
         commitInfoJSON.put("controllerLines", DirectoryScraper.getDirectoryDistribution(commitInfo).get("Controller"));
