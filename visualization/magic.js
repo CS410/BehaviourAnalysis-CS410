@@ -2,11 +2,13 @@ var developerkey = "kemitche";
 
 var WIDTH = window.innerWidth,
     HEIGHT = window.innerHeight,
-    RADIUS = Math.min(WIDTH, HEIGHT) / 2.5; // Scaling the radius 
+	OUTER = 75,
+    RADIUS = Math.min(WIDTH, HEIGHT) / 3; // Scaling the radius 
 
+	
 var DAY_DURATION = 10000,
-	DAY_FREQUENCY = 500,
-	DAY_INDEX = 0;
+	DAY_FREQUENCY = 250,
+	DAY_INDEX = -1;
 
 var	z = d3.scale.category20c(); // MAGIC?
 
@@ -36,60 +38,33 @@ var svg = d3.select("body").append("svg")
 // DATA
 //////////////////////////////////////////////////////////////////////////
 
-var timewedgesum = 0;
-var timewedgeindex = 0;
-
 var commitlist = jsondata[developerkey].commitList;
+var sortedkeys = Object.keys(commitlist).sort();
+var linesmodified = 0;
+var mlines = 0;
+var vlines = 0;
+var clines = 0;
 
-// Scaling functions for seconds and duration plotting
-var scaleSecs = d3.scale.linear().domain([0, DAY_FREQUENCY-1]).range([0, 2 * Math.PI]);
-var scaleDur  = d3.scale.linear().domain([1, RADIUS]).range([0, DAY_DURATION]);
-var colourScale = d3.scale.linear().domain([0,100]).range([0, 2*Math.PI]);
+var colourdata = [[0,0,COLOURS[RED]], [0,0,COLOURS[BLUE]], [0,0,COLOURS[YELLOW]], [0,0,COLOURS[GRAY]]];
 
-
-
-//////////////////////////////////////////////////////////////////////////
-// TEST DATA
-//////////////////////////////////////////////////////////////////////////
-
-var arrayfallback = [	[0, 20, 40, 50, 55, 57, 60, 1000],
-						[40, 78, 1000],
-						[1000],
-						[2, 12, 40, 44, 330],
-						[1000],
-						[1000],
-						[10,20,30,40,50,60,70,80] ]
-var fallbackindex = 0;
-var array = arrayfallback[fallbackindex].slice(0);	
-var colourdata = [[0,25,COLOURS[RED]], [25,50,COLOURS[BLUE]], [50,75,COLOURS[YELLOW]], [75,100,COLOURS[GRAY]]];
 
 //////////////////////////////////////////////////////////////////////////
 // VISUALIZATION BEGIN
 //////////////////////////////////////////////////////////////////////////	
-
-
-// Setup objects	
-var mvcpiearc = d3.svg.arc()
-	.innerRadius(RADIUS)
-	.outerRadius(240)
-	.startAngle(function(d){return colourScale(d[0]);})
-	.endAngle(function(d){return colourScale(d[1]);});
-
 
 svg.selectAll(".mvcpie").data(colourdata)
 	.enter().append("path")
 	.attr("d", mvcpiearc)
 	.attr("class", "mvcpie")
 	.attr("fill", function(d){return d[2];})
-	.attr("opacity", 0.1)
+	.attr("opacity", 0.25)
 	.attr("transform", "translate("+WIDTH/2+","+HEIGHT/2+")");
-
 
 svg.selectAll("#timewedge").data(getNow)
 	.enter().append("path")
 	.attr("id", "timewedge")
 	.attr("d", timewedgearc)
-	.attr("opacity", 0.3)
+	.attr("opacity", 0.5)
 	.attr("stroke", "black")
 	.attr("stroke-width", 0)
 	.attr("fill", "none")
@@ -104,8 +79,6 @@ svg.selectAll("#clockhand").data(getNow)
 	.attr("fill", "black")
 	.attr("transform", "translate(" + WIDTH / 2 + "," + HEIGHT / 2 + ")");
 
-
-	
 // Setup outside border circle
 svg.append("svg:circle")
 	.attr("id", "daycircle-border")
@@ -122,7 +95,7 @@ svg.append("svg:circle")
 	.attr("cx", WIDTH/2)
 	.attr("cy", HEIGHT/2)
 	.attr("stroke-width", 1)
-	.attr("opacity", 0.3)
+	.attr("opacity", 0.5)
 	.attr("fill", "none");
 	
 //////////////////////////////////////////////////////////////////////////
@@ -132,13 +105,12 @@ drawCircle(); // Draw initial circle
 
 // New circle every DAY_FREQUENCY - same as rotating clock hand
 setInterval(function() {
-	fallbackindex = (fallbackindex+1)%7;
-	array = arrayfallback[fallbackindex].slice(0);
+	//console.log(commitlist[sortedkeys[DAY_INDEX]]);
 	drawCircle();
 }, DAY_FREQUENCY);
 
-var START_TIME = (new Date).getTime();
 var t0 = window.performance.now();
+
 // Timer is not guaranteed to tick 1 ms, accuracy is up to 10ms
 d3.timer(function() {
 	var dataclock = getNow();
@@ -147,29 +119,18 @@ d3.timer(function() {
 	clockhand.attr("d", clockarc)
 		.attr("stroke", "black")
 		.attr("stroke-width", 5);
-	//console.log(dataclock[0].value%500);
-
-	if (dataclock[0].value%DAY_FREQUENCY >= array[0]) {
-		//console.log(dataclock[0].value%500 + " vs " + array[0]);
-		plotCommit(DAY_INDEX, array[0]);
-		
-		var commitdetails = getCommitDetails();
-		var commitcircle = svg.select("#commitcircle")
-			.transition()
-			.duration(500)
-			.attr("r", commitdetails[0].radius)
-			.attr("fill", commitdetails[0].colour);
-		
-		var datapie = getTimewedge(array[0]);
-		var timewedge = svg.select("#timewedge").data(datapie);
-		timewedge.transition()
-			.duration(500)
-			.attr("d", timewedgearc)
-			.attr("fill", commitdetails[0].colour)
-			.attr("stroke", "black")
-			.attr("stroke-width", 0);
-		
-		array.shift();
+	
+	var commits = commitlist[sortedkeys[DAY_INDEX]];
+	if (commits.length > 0) {
+		var commit = commits[0];
+		var ms = scaleSeconds(commit.authoredDateInSeconds);
+		if (dataclock[0].value%DAY_FREQUENCY >= ms) {
+			//console.log(dataclock[0].value%500 + " vs " + array[0]);
+			plotCommit(DAY_INDEX, commit);
+			updateBackground(commit);
+			updateWedge(commit);
+			commits.shift();
+		}
 	}
 }, 1);
 
@@ -180,6 +141,8 @@ d3.timer(function() {
 // Draws a day circle
 function drawCircle() {
 	DAY_INDEX++;
+
+	//console.log(sortedkeys[DAY_INDEX]);
 	svg.append("svg:circle")
 		.attr("id", "circle-".concat(DAY_INDEX.toString()))
 		.attr("cx", WIDTH / 2)
@@ -195,55 +158,109 @@ function drawCircle() {
 			.remove();
 
 	var dayselector = "#circle-".concat(DAY_INDEX.toString());	  
-	var circle = d3.select(dayselector);		
+	var circle = d3.select(dayselector);	
 	return circle[0];
 }
 
 // Plots commit circle onto day circle
-function plotCommit(circleindex, ms) {
+function plotCommit(circleindex, commit) {
 	var dayselector = "#circle-".concat(circleindex.toString());	  
 	var circle = svg.select(dayselector);
 	var radius = circle.attr("r");
+	
+	var committime = scaleSeconds(commit.authoredDateInSeconds);
+	var commitradius = commit.additions + commit.deletions;
+	var commitcolour = colour(	commit.modelLines, 
+								commit.viewLines, 
+								commit.controllerLines, 
+								commit.additions + commit.deletions	);
+	
 	svg.append("svg:circle")
-		.attr("cx", xpoint(ms, radius))
-		.attr("cy", ypoint(ms, radius))
-		.attr("r", randomradius)
-		.style("stroke", "none")
-		.style("stroke-opacity", 1)
-		.style("fill", colourrandom())
+		.attr("cx", xpoint(committime, radius))
+		.attr("cy", ypoint(committime, radius))
+		.attr("r", commitradius)
+		.style("stroke", commitcolour.darker(2))
+		.style("stroke-width", 2)
+		.style("fill", commitcolour)
 		.transition()
-			.duration(scaleDur(circle.attr("r")))
+			.duration(scaleDuration(circle.attr("r")))
 			.ease("linear")
 			.attr("cx", WIDTH/2)
 			.attr("cy", HEIGHT/2)
 			.remove();
 }
 
+function updateWedge(commit) {
+	var datapie = getTimewedge(commit.timeAverage, commit.timeStdev);
+	var timewedge = svg.select("#timewedge").data(datapie);
+	timewedge.transition()
+		.duration(500)
+		.attr("d", timewedgearc)
+		.attr("fill", d3.select("#commitcircle").attr("fill"))
+		.attr("stroke", "black")
+		.attr("stroke-width", 1);
+}
+
+function updateBackground(commit) {
+	mlines = commit.modelLines + mlines;
+	vlines = commit.viewLines + vlines;
+	clines = commit.controllerLines + clines;
+	linesmodified = commit.additions + commit.deletions + linesmodified;
+	
+	//console.log(mlines + " " + vlines + " " + clines + " " + linesmodified);
+	
+	var commitcircle = svg.select("#commitcircle")
+		.transition()
+		.duration(500)
+		.attr("r", commit.average)//s + commit.standardDeviation)
+		.attr("fill", colour(mlines, vlines, clines, linesmodified));
+		
+	var M = Math.floor(100*mlines/linesmodified);
+	var V = Math.floor(100*vlines/linesmodified);
+	var C = Math.floor(100*clines/linesmodified);
+	
+	colourdata = [	[0,M,COLOURS[RED]], 
+					[M,M+V,COLOURS[YELLOW]], 
+					[M+V,M+V+C,COLOURS[BLUE]], 
+					[M+V+C,100,COLOURS[GRAY]]];
+		
+	svg.selectAll(".mvcpie").data(colourdata)
+		.transition()
+		.duration(500)
+		.attr("d", mvcpiearc);
+		
+	//console.log(commit.average + " " + commit.standardDeviation);
+}
+
 //////////////////////////////////////////////////////////////////////////
 // UTILITY FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
+// Scaling functions for seconds and duration plotting
+var scaleClock = d3.scale.linear().domain([0, DAY_FREQUENCY-1]).range([0, 2*Math.PI]);
+var scaleDuration  = d3.scale.linear().domain([1, RADIUS]).range([0, DAY_DURATION]);
+var scaleMVC = d3.scale.linear().domain([0,100]).range([0, 2*Math.PI]);
+var scaleSeconds = d3.scale.linear().domain([0,86400]).range([0, DAY_FREQUENCY-1]);
+var scaleHours = d3.scale.linear().domain([0,23]).range([0, DAY_FREQUENCY-1]);
 
 // Arc function to update clock hand
 var clockarc = d3.svg.arc()
-    .startAngle(function(d) { return scaleSecs(d.value); })
-    .endAngle(function(d) { return scaleSecs(d.value); })
+    .startAngle(function(d) { return scaleClock(d.value); })
+    .endAngle(function(d) { return scaleClock(d.value); })
     .innerRadius(0)
     .outerRadius(RADIUS);
 
 var timewedgearc = d3.svg.arc()
-    .startAngle(function(d) { return scaleSecs(d.start); })
-    .endAngle(function(d) { return scaleSecs(d.end); })
+    .startAngle(function(d) { return scaleClock(d.start); })
+    .endAngle(function(d) { return scaleClock(d.end); })
 	.innerRadius(0)
-	.outerRadius(RADIUS+50);
-	
-// Returns milliseconds since start
-function getMillisecond() {
-	var epoch = (new Date).getTime();
-	return [
-		{value: epoch - START_TIME}
-	];
-}
+	.outerRadius(RADIUS+OUTER);
+		
+var mvcpiearc = d3.svg.arc()
+	.innerRadius(RADIUS+OUTER)
+	.outerRadius(RADIUS+(OUTER*2))
+	.startAngle(function(d){return scaleMVC(d[0]);})
+	.endAngle(function(d){return scaleMVC(d[1]);});
 
 // Returns window.performance.now, more accurate than new Date
 function getNow() {
@@ -252,59 +269,40 @@ function getNow() {
 		{ value: t - t0 }
 	];
 }
-function getTimewedge(time) {
-	timewedgeindex++;
-	timewedgesum = timewedgesum + time;
-	
+function getTimewedge(time, std) {
 	return [
-		{ start: (timewedgesum/timewedgeindex)-20,
-		  end: 	(timewedgesum/timewedgeindex)+20 }	
-	]
-}
-
-function getCommitDetails() {
-	return [
-		{ radius: Math.floor(Math.random()*RADIUS),
-		  colour: d3.rgb(Math.floor(Math.random()*255),	Math.floor(Math.random()*255), Math.floor(Math.random()*255))
-		}
+		{ start: scaleHours(time-std),
+		  end: 	scaleHours(time+std) }	
 	]
 }
 
 // Converts ms to angle and generates x point to plot
 function xpoint(ms, radius) {
-	var angle = scaleSecs(ms);
+	var angle = scaleClock(ms);
 	return WIDTH/2 + Math.sin(angle) * radius
 }
 
 // Converts ms to angle and generates y point to plot
 function ypoint(ms, radius) {
-	var angle = scaleSecs(ms);
-	return HEIGHT/2 - Math.cos(scaleSecs(ms)) * radius
+	var angle = scaleClock(ms);
+	return HEIGHT/2 - Math.cos(scaleClock(ms)) * radius
 }
 
-function colourrandom() {
-	return d3.rgb(Math.floor(Math.random()*255),	Math.floor(Math.random()*255), Math.floor(Math.random()*255));
-}
-
-function randomradius() {
-	return Math.max(5, Math.floor(Math.random()*20));
-}
-
-function colour(m, v, c) {
-	if (m >= 70)
-		return RED;
-	else if (v >= 70)
-		return YELLOW;
-	else if (c >= 70)
-		return BLUE;
-	else if ((m+v) >= 70)
-		return ORANGE;
-	else if ((m+c) >= 70)
-		return PURPLE;
-	else if ((v+c) >= 70)
-		return GREEN;
+function colour(m, v, c, total) {
+	if (m/total >= 0.60)
+		return COLOURS[RED];
+	else if (v/total >= 0.60)
+		return COLOURS[YELLOW];
+	else if (c/total >= 0.60)
+		return COLOURS[BLUE];
+	else if ((m+v)/total >= 0.70)
+		return COLOURS[ORANGE];
+	else if ((m+c)/total >= 0.70)
+		return COLOURS[PURPLE];
+	else if ((v+c)/total >= 0.70)
+		return COLOURS[GREEN];
 	else 
-		return GRAY;
+		return COLOURS[GRAY];
 }
 
 
