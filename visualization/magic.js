@@ -1,4 +1,4 @@
-var developerkey = "kemitche";
+var developerkey = "chromakode";
 
 var WIDTH = window.innerWidth,
     HEIGHT = window.innerHeight,
@@ -34,6 +34,7 @@ var svg = d3.select("body").append("svg")
 	.attr("width", WIDTH)
     .attr("height", HEIGHT);
 
+
 //////////////////////////////////////////////////////////////////////////
 // DATA
 //////////////////////////////////////////////////////////////////////////
@@ -45,7 +46,35 @@ var mlines = 0;
 var vlines = 0;
 var clines = 0;
 
-var colourdata = [[0,0,COLOURS[RED]], [0,0,COLOURS[BLUE]], [0,0,COLOURS[YELLOW]], [0,0,COLOURS[GRAY]]];
+var colourdata = getMVCpie(25,25,25,25,[0,0,0,0]);
+
+// Scaling functions for seconds and duration plotting
+var scaleClock = d3.scale.linear().domain([0, DAY_FREQUENCY-1]).range([0, 2*Math.PI]);
+var scaleDuration  = d3.scale.linear().domain([1, RADIUS]).range([0, DAY_DURATION]);
+var scaleMVC = d3.scale.linear().domain([0,100]).range([0, 2*Math.PI]);
+var scaleSeconds = d3.scale.linear().domain([0,86400]).range([0, DAY_FREQUENCY-1]);
+var scaleHours = d3.scale.linear().domain([0,23]).range([0, DAY_FREQUENCY-1]);
+var scaleDiff = d3.scale.linear().domain([0,100]).range([0, 500]);
+
+// Arc function to update clock hand
+var clockarc = d3.svg.arc()
+    .startAngle(function(d) { return scaleClock(d.value); })
+    .endAngle(function(d) { return scaleClock(d.value); })
+    .innerRadius(0)
+    .outerRadius(RADIUS);
+
+var timewedgearc = d3.svg.arc()
+    .startAngle(function(d) { return scaleClock(d.start); })
+    .endAngle(function(d) { return scaleClock(d.end); })
+	.innerRadius(0)
+	.outerRadius(RADIUS+OUTER);
+
+		
+var mvcpiearc = d3.svg.arc()
+	.startAngle(function(d){return scaleMVC(d.start);})
+	.endAngle(function(d){return scaleMVC(d.end);})	
+	.innerRadius(RADIUS+OUTER)
+	.outerRadius(RADIUS+(OUTER*2));
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -54,16 +83,16 @@ var colourdata = [[0,0,COLOURS[RED]], [0,0,COLOURS[BLUE]], [0,0,COLOURS[YELLOW]]
 
 svg.selectAll(".mvcpie").data(colourdata)
 	.enter().append("path")
-	.attr("d", mvcpiearc)
+	//.attr("d", mvcpiearc)
 	.attr("class", "mvcpie")
-	.attr("fill", function(d){return d[2];})
+	.attr("fill", function(d){return d.colour;})
 	.attr("opacity", 0.25)
 	.attr("transform", "translate("+WIDTH/2+","+HEIGHT/2+")");
 
-svg.selectAll("#timewedge").data(getNow)
+svg.selectAll("#timewedge").data(getTimewedge)
 	.enter().append("path")
 	.attr("id", "timewedge")
-	.attr("d", timewedgearc)
+	//.attr("d", timewedgearc)
 	.attr("opacity", 0.5)
 	.attr("stroke", "black")
 	.attr("stroke-width", 0)
@@ -73,7 +102,7 @@ svg.selectAll("#timewedge").data(getNow)
 svg.selectAll("#clockhand").data(getNow)
 	.enter().append("path")
 	.attr("id", "clockhand")
-	.attr("d", clockarc)
+	//.attr("d", clockarc)
 	.attr("stroke", "black")
 	.attr("stroke-width", 0)
 	.attr("fill", "black")
@@ -119,12 +148,17 @@ d3.timer(function() {
 	clockhand.attr("d", clockarc)
 		.attr("stroke", "black")
 		.attr("stroke-width", 5);
-	
+
 	var commits = commitlist[sortedkeys[DAY_INDEX]];
 	if (commits.length > 0) {
 		var commit = commits[0];
-		var ms = scaleSeconds(commit.authoredDateInSeconds);
+		var ms = scaleSeconds(commit.committedDateInSeconds);
 		if (dataclock[0].value%DAY_FREQUENCY >= ms) {
+			mlines = commit.modelLines + mlines;
+			vlines = commit.viewLines + vlines;
+			clines = commit.controllerLines + clines;
+			linesmodified = commit.additions + commit.deletions + linesmodified;
+		
 			//console.log(dataclock[0].value%500 + " vs " + array[0]);
 			plotCommit(DAY_INDEX, commit);
 			updateBackground(commit);
@@ -168,7 +202,7 @@ function plotCommit(circleindex, commit) {
 	var circle = svg.select(dayselector);
 	var radius = circle.attr("r");
 	
-	var committime = scaleSeconds(commit.authoredDateInSeconds);
+	var committime = scaleSeconds(commit.committedDateInSeconds);
 	var commitradius = commit.additions + commit.deletions;
 	var commitcolour = colour(	commit.modelLines, 
 								commit.viewLines, 
@@ -196,16 +230,11 @@ function updateWedge(commit) {
 	timewedge.transition()
 		.duration(500)
 		.attr("d", timewedgearc)
-		.attr("fill", d3.select("#commitcircle").attr("fill"))
-		.attr("stroke", "black")
-		.attr("stroke-width", 1);
+		.attr("fill", colour(mlines, vlines, clines, linesmodified))
 }
 
 function updateBackground(commit) {
-	mlines = commit.modelLines + mlines;
-	vlines = commit.viewLines + vlines;
-	clines = commit.controllerLines + clines;
-	linesmodified = commit.additions + commit.deletions + linesmodified;
+
 	
 	//console.log(mlines + " " + vlines + " " + clines + " " + linesmodified);
 	
@@ -214,53 +243,35 @@ function updateBackground(commit) {
 		.duration(500)
 		.attr("r", commit.average)//s + commit.standardDeviation)
 		.attr("fill", colour(mlines, vlines, clines, linesmodified));
-		
-	var M = Math.floor(100*mlines/linesmodified);
-	var V = Math.floor(100*vlines/linesmodified);
-	var C = Math.floor(100*clines/linesmodified);
+
+	var M = Math.floor(100*(mlines/linesmodified));
+	var V = Math.floor(100*(vlines/linesmodified));
+	var C = Math.floor(100*(clines/linesmodified));
+	var O = 100 - M - V - C;
+
+	var oldM = colourdata[0].end;
+	var oldV = M - colourdata[1].end;
+	var oldC = (M + V) - colourdata[2].end;
+	var oldO = 100 - oldM - oldV - oldC;
 	
-	colourdata = [	[0,M,COLOURS[RED]], 
-					[M,M+V,COLOURS[YELLOW]], 
-					[M+V,M+V+C,COLOURS[BLUE]], 
-					[M+V+C,100,COLOURS[GRAY]]];
-		
+	var diff = [Math.abs(M-oldM),
+				Math.abs(V-oldV),				
+				Math.abs(C-oldC),				
+				Math.abs(O-oldO)]
+	
+	colourdata = getMVCpie(M,V,C,100-M-V-C,diff);
+	
 	svg.selectAll(".mvcpie").data(colourdata)
 		.transition()
-		.duration(500)
+		.duration(function(d) { return scaleDiff(d.diff); })
 		.attr("d", mvcpiearc);
-		
-	//console.log(commit.average + " " + commit.standardDeviation);
+	
+	//console.log(linesmodified + " " + commit.average + " " + commit.standardDeviation);
 }
 
 //////////////////////////////////////////////////////////////////////////
 // UTILITY FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-
-// Scaling functions for seconds and duration plotting
-var scaleClock = d3.scale.linear().domain([0, DAY_FREQUENCY-1]).range([0, 2*Math.PI]);
-var scaleDuration  = d3.scale.linear().domain([1, RADIUS]).range([0, DAY_DURATION]);
-var scaleMVC = d3.scale.linear().domain([0,100]).range([0, 2*Math.PI]);
-var scaleSeconds = d3.scale.linear().domain([0,86400]).range([0, DAY_FREQUENCY-1]);
-var scaleHours = d3.scale.linear().domain([0,23]).range([0, DAY_FREQUENCY-1]);
-
-// Arc function to update clock hand
-var clockarc = d3.svg.arc()
-    .startAngle(function(d) { return scaleClock(d.value); })
-    .endAngle(function(d) { return scaleClock(d.value); })
-    .innerRadius(0)
-    .outerRadius(RADIUS);
-
-var timewedgearc = d3.svg.arc()
-    .startAngle(function(d) { return scaleClock(d.start); })
-    .endAngle(function(d) { return scaleClock(d.end); })
-	.innerRadius(0)
-	.outerRadius(RADIUS+OUTER);
-		
-var mvcpiearc = d3.svg.arc()
-	.innerRadius(RADIUS+OUTER)
-	.outerRadius(RADIUS+(OUTER*2))
-	.startAngle(function(d){return scaleMVC(d[0]);})
-	.endAngle(function(d){return scaleMVC(d[1]);});
 
 // Returns window.performance.now, more accurate than new Date
 function getNow() {
@@ -273,6 +284,35 @@ function getTimewedge(time, std) {
 	return [
 		{ start: scaleHours(time-std),
 		  end: 	scaleHours(time+std) }	
+	]
+}
+
+function getMVCpie(M,V,C,O,diff) {
+	return [
+			{
+				start: 	0,
+				end:	M,
+				diff: 	diff[0],
+				colour:	COLOURS[RED]
+			},
+			{
+				start: 	M,
+				end:	M+V, 
+				diff: 	diff[1],
+				colour:	COLOURS[YELLOW]
+			},
+			{
+				start: 	M+V,
+				end:	M+V+C, 
+				diff: 	diff[2],
+				colour:	COLOURS[BLUE]
+			},			
+			{
+				start: 	M+V+C,
+				end:	100, 
+				diff: 	diff[3],
+				colour:	COLOURS[GRAY]
+			},
 	]
 }
 
