@@ -1,7 +1,7 @@
 var developerkey = "kemitche";
 
 var dev = document.getElementById("dev");
-dev.innerHTML = "reddit software engineer: <b>"+developerkey+"</b>";
+dev.innerHTML = "<b>"+developerkey+"</b>";
 
 var datediv = document.getElementById("date");
 
@@ -10,10 +10,10 @@ var WIDTH = window.innerWidth,
     HEIGHT = window.innerHeight,
 	OUTER = 75,
     RADIUS = Math.min(WIDTH, HEIGHT) / 3; // Scaling the radius 
-
+var MULTIPLIER = 10;
 	
-var DAY_DURATION = 5000,
-	DAY_FREQUENCY = 500,
+var DAY_DURATION = 1000,
+	DAY_FREQUENCY = DAY_DURATION / MULTIPLIER,
 	DAY_INDEX = -1;
 	
 var TRANSITION = Math.min(1000, DAY_DURATION/2);
@@ -25,8 +25,9 @@ var COLOURS = [	d3.rgb(255,0,0),
 				d3.rgb(255,255,0),
 				d3.rgb(0,255,0),
 				d3.rgb(128,0,128),
-				d3.rgb(255,165,0),
-				d3.rgb(128,128,128) ]
+				d3.rgb(255,128,0),
+				d3.rgb(128,128,128),
+				d3.rgb(102,255,255)]
 
 var RED 	= 0,
 	BLUE	= 1,
@@ -34,13 +35,16 @@ var RED 	= 0,
 	GREEN	= 3,
 	PURPLE	= 4,
 	ORANGE	= 5,
-	GRAY	= 6;
+	GRAY	= 6,
+	CYAN 	= 7;
 
 
 // Our base svg element that contains all the graphics
-var svg = d3.select("body").append("svg")
+var svg = d3.select("#svgdiv").append("svg")
 	.attr("width", WIDTH)
     .attr("height", HEIGHT);
+
+	
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -54,6 +58,9 @@ var linesmodified = 0;
 var mlines = 0;
 var vlines = 0;
 var clines = 0;
+var llines = 0;
+
+var mvclines = 0;
 
 var Ncommit = 0;
 var S2commit = 0;
@@ -186,8 +193,9 @@ d3.timer(function() {
 			mlines = commit.modelLines + mlines;
 			vlines = commit.viewLines + vlines;
 			clines = commit.controllerLines + clines;
+			llines = commit.libLines + llines;
 			linesmodified = commit.additions + commit.deletions + linesmodified;
-
+			mvclines = mlines + vlines + clines;
 		
 			//console.log(dataclock[0].value%500 + " vs " + array[0]);
 			plotCommit(DAY_INDEX, commit);
@@ -227,9 +235,9 @@ function drawCircle() {
 }
 
 function update(commit) {
-	console.log("destroyed");
 	updateBackground(commit);
 	updateWedge(commit);
+	console.log(mlines + " " + vlines + " " + clines + " " + llines + " " + mvclines);
 }
 
 // Plots commit circle onto day circle
@@ -243,6 +251,7 @@ function plotCommit(circleindex, commit) {
 	var commitcolour = colour(	commit.modelLines, 
 								commit.viewLines, 
 								commit.controllerLines, 
+								commit.libLines,
 								commit.additions + commit.deletions	);
 	
 	var plottedCommit = svg.append("svg:circle")
@@ -275,7 +284,7 @@ function updateWedge(commit) {
 	timewedge.transition()
 		.duration(TRANSITION)
 		.attr("d", timewedgearc)
-		.attr("fill", colour(mlines, vlines, clines, linesmodified))
+		.attr("fill", colour(mlines, vlines, clines, llines, mvclines))
 }
 
 function updateBackground(commit) {
@@ -287,14 +296,15 @@ function updateBackground(commit) {
 	var commitcircle = svg.select("#commitcircle")
 		.transition()
 		.duration(TRANSITION)
-		.attr("r", Math.max(5,S1commit/Ncommit))
-		.attr("fill", colour(mlines, vlines, clines, linesmodified));
+		.attr("r", Math.min(Math.min(WIDTH, HEIGHT), Math.max(5,S1commit/Ncommit)))
+		.attr("fill", colour(mlines, vlines, clines, llines, mvclines));
 		
 	var commitcirclestd = svg.select("#commitcircle-std")
 		.transition()
 		.duration(TRANSITION)
-		.attr("r", Math.max(5,S1commit/Ncommit + std(Ncommit,S2commit,S1commit)))
-		.attr("fill", colour(mlines, vlines, clines, linesmodified));
+		.attr("r", Math.min(Math.min(WIDTH, HEIGHT), 
+							Math.max(5,S1commit/Ncommit + std(Ncommit,S2commit,S1commit))))
+		.attr("fill", colour(mlines, vlines, clines, llines, mvclines));
 /*
 	var M = Math.floor(100*(mlines/linesmodified));
 	var V = Math.floor(100*(vlines/linesmodified));
@@ -379,7 +389,7 @@ function ypoint(ms, radius) {
 	return HEIGHT/2 - Math.cos(scaleClock(ms)) * radius
 }
 
-function colour(m, v, c, total) {
+function colour(m, v, c, l, total) {
 	if (m/total >= 0.60)
 		return COLOURS[RED];
 	else if (v/total >= 0.60)
@@ -392,7 +402,9 @@ function colour(m, v, c, total) {
 		return COLOURS[PURPLE];
 	else if ((v+c)/total >= 0.70)
 		return COLOURS[GREEN];
-	else 
+	else if (l/total >= 0.6)
+		return COLOURS[CYAN];
+	else
 		return COLOURS[GRAY];
 }
 
