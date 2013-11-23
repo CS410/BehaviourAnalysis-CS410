@@ -69,15 +69,7 @@ public class main {
     	CommitPatternAnalyzer.calcRunningAverages(authorMap);
     	JSONObject jsonMap = JSONConvert.mapToJSONByDay(authorMap);
 
-        for (String author : authorMap.keySet()) {
-            Author auth = authorMap.get(author);
-            System.out.println(auth.getName());
-            for (CommitInfo commitList: auth.getCommitList()) {
-                System.out.println(commitList.getCommittedDate());
-            }
-        }
         System.setOut(out);
-
         System.out.println(jsonMap.toString());
     }
 }

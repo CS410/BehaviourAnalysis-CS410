@@ -14,21 +14,23 @@ public class DirectoryScraper {
 		int modelLines = 0;
 		int controllerLines = 0;
 		int viewLines = 0;
+		int libLines = 0;
 		int otherLines = 0;
 		
 		List<FileChanges> filesChanged = commitInfo.getFilesChanged();
 		
 		for (FileChanges fileChanges : filesChanged) {
 			String filename = fileChanges.getFilename();
+			
 			int linesChanged = fileChanges.getLinesAdded().size() + fileChanges.getLinesDeleted().size();
 			
 			if (filename.startsWith("r2/r2/models/")) {
 				modelLines = modelLines + linesChanged;
-			}
-			if (filename.startsWith("r2/r2/controllers/")) {
+			} else if (filename.startsWith("r2/r2/controllers/")) {
 				controllerLines = controllerLines + linesChanged;
-			}
-			if (filename.startsWith("r2/r2/public/") || 
+			} else if (filename.startsWith("r2/r2/lib/")) {
+				libLines = libLines + linesChanged;
+			} else if (filename.startsWith("r2/r2/public/") || 
 					filename.startsWith("r2/r2/templates/")) {
 				viewLines = viewLines + linesChanged;
 			} else {
@@ -40,6 +42,7 @@ public class DirectoryScraper {
 		directoryDistribution.put("Model", modelLines);
 		directoryDistribution.put("Controller", controllerLines);
 		directoryDistribution.put("View", viewLines);
+		directoryDistribution.put("Library", libLines);
 		directoryDistribution.put("Other", otherLines);
 		
 		return directoryDistribution;

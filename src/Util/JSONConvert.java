@@ -41,10 +41,13 @@ public class JSONConvert {
         commitInfoJSON.put("deletions", commitInfo.getDeletions());
         commitInfoJSON.put("committedDateInSeconds", commitInfo.getCommittedDateInSeconds());
 
-        commitInfoJSON.put("modelLines", DirectoryScraper.getDirectoryDistribution(commitInfo).get("Model"));
-        commitInfoJSON.put("controllerLines", DirectoryScraper.getDirectoryDistribution(commitInfo).get("Controller"));
-        commitInfoJSON.put("viewLines", DirectoryScraper.getDirectoryDistribution(commitInfo).get("View"));
-        commitInfoJSON.put("otherLines", DirectoryScraper.getDirectoryDistribution(commitInfo).get("Other"));
+        Map<String, Integer> dirDistribution = DirectoryScraper.getDirectoryDistribution(commitInfo);
+        
+        commitInfoJSON.put("modelLines", dirDistribution.get("Model"));
+        commitInfoJSON.put("controllerLines", dirDistribution.get("Controller"));
+        commitInfoJSON.put("viewLines", dirDistribution.get("View"));
+        commitInfoJSON.put("libLines", dirDistribution.get("Library"));
+        commitInfoJSON.put("otherLines", dirDistribution.get("Other"));
 
         return commitInfoJSON;
     }
