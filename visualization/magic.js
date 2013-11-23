@@ -1,4 +1,10 @@
-var developerkey = "chromakode";
+var developerkey = "kemitche";
+
+var dev = document.getElementById("dev");
+dev.innerHTML = "reddit software engineer: <b>"+developerkey+"</b>";
+
+var datediv = document.getElementById("date");
+
 
 var WIDTH = window.innerWidth,
     HEIGHT = window.innerHeight,
@@ -6,9 +12,11 @@ var WIDTH = window.innerWidth,
     RADIUS = Math.min(WIDTH, HEIGHT) / 3; // Scaling the radius 
 
 	
-var DAY_DURATION = 10000,
-	DAY_FREQUENCY = 250,
+var DAY_DURATION = 5000,
+	DAY_FREQUENCY = 500,
 	DAY_INDEX = -1;
+	
+var TRANSITION = Math.min(1000, DAY_DURATION/2);
 
 var	z = d3.scale.category20c(); // MAGIC?
 
@@ -41,12 +49,21 @@ var svg = d3.select("body").append("svg")
 
 var commitlist = jsondata[developerkey].commitList;
 var sortedkeys = Object.keys(commitlist).sort();
+
 var linesmodified = 0;
 var mlines = 0;
 var vlines = 0;
 var clines = 0;
 
-var colourdata = getMVCpie(25,25,25,25,[0,0,0,0]);
+var Ncommit = 0;
+var S2commit = 0;
+var S1commit = 0;
+
+var Nhour = 0;
+var S2hour = 0;
+var S1hour = 0;
+
+var colourdata = getMVCpie(0,0,0,0,[0,0,0,0]);
 
 // Scaling functions for seconds and duration plotting
 var scaleClock = d3.scale.linear().domain([0, DAY_FREQUENCY-1]).range([0, 2*Math.PI]);
@@ -54,7 +71,8 @@ var scaleDuration  = d3.scale.linear().domain([1, RADIUS]).range([0, DAY_DURATIO
 var scaleMVC = d3.scale.linear().domain([0,100]).range([0, 2*Math.PI]);
 var scaleSeconds = d3.scale.linear().domain([0,86400]).range([0, DAY_FREQUENCY-1]);
 var scaleHours = d3.scale.linear().domain([0,23]).range([0, DAY_FREQUENCY-1]);
-var scaleDiff = d3.scale.linear().domain([0,100]).range([0, 500]);
+//var scaleDiff = d3.scale.linear().domain([0,100]).range([0, 500]);
+var scaleSquare = d3.scale.pow().exponent(2);
 
 // Arc function to update clock hand
 var clockarc = d3.svg.arc()
@@ -81,13 +99,13 @@ var mvcpiearc = d3.svg.arc()
 // VISUALIZATION BEGIN
 //////////////////////////////////////////////////////////////////////////	
 
-svg.selectAll(".mvcpie").data(colourdata)
-	.enter().append("path")
-	//.attr("d", mvcpiearc)
-	.attr("class", "mvcpie")
-	.attr("fill", function(d){return d.colour;})
-	.attr("opacity", 0.25)
-	.attr("transform", "translate("+WIDTH/2+","+HEIGHT/2+")");
+//svg.selectAll(".mvcpie").data(colourdata)
+//	.enter().append("path")
+//	//.attr("d", mvcpiearc)
+//	.attr("class", "mvcpie")
+//	.attr("fill", function(d){return d.colour;})
+//	.attr("opacity", 0.25)
+//	.attr("transform", "translate("+WIDTH/2+","+HEIGHT/2+")");
 
 svg.selectAll("#timewedge").data(getTimewedge)
 	.enter().append("path")
@@ -123,8 +141,18 @@ svg.append("svg:circle")
 	.attr("r", 0)
 	.attr("cx", WIDTH/2)
 	.attr("cy", HEIGHT/2)
-	.attr("stroke-width", 1)
+	.attr("stroke-width", 2)
+	.attr("stroke", "black")
 	.attr("opacity", 0.5)
+	.attr("fill", "none");
+	
+svg.append("svg:circle")
+	.attr("id", "commitcircle-std")
+	.attr("r", 0)
+	.attr("cx", WIDTH/2)
+	.attr("cy", HEIGHT/2)
+	.attr("stroke-width", 0)
+	.attr("opacity", 0.25)
 	.attr("fill", "none");
 	
 //////////////////////////////////////////////////////////////////////////
@@ -154,15 +182,17 @@ d3.timer(function() {
 		var commit = commits[0];
 		var ms = scaleSeconds(commit.committedDateInSeconds);
 		if (dataclock[0].value%DAY_FREQUENCY >= ms) {
+			
 			mlines = commit.modelLines + mlines;
 			vlines = commit.viewLines + vlines;
 			clines = commit.controllerLines + clines;
 			linesmodified = commit.additions + commit.deletions + linesmodified;
+
 		
 			//console.log(dataclock[0].value%500 + " vs " + array[0]);
 			plotCommit(DAY_INDEX, commit);
-			updateBackground(commit);
-			updateWedge(commit);
+			//updateBackground(commit);
+			//updateWedge(commit);
 			commits.shift();
 		}
 	}
@@ -175,7 +205,7 @@ d3.timer(function() {
 // Draws a day circle
 function drawCircle() {
 	DAY_INDEX++;
-
+	datediv.innerHTML = "<b>"+sortedkeys[DAY_INDEX]+"</b>";
 	//console.log(sortedkeys[DAY_INDEX]);
 	svg.append("svg:circle")
 		.attr("id", "circle-".concat(DAY_INDEX.toString()))
@@ -196,6 +226,12 @@ function drawCircle() {
 	return circle[0];
 }
 
+function update(commit) {
+	console.log("destroyed");
+	updateBackground(commit);
+	updateWedge(commit);
+}
+
 // Plots commit circle onto day circle
 function plotCommit(circleindex, commit) {
 	var dayselector = "#circle-".concat(circleindex.toString());	  
@@ -209,49 +245,65 @@ function plotCommit(circleindex, commit) {
 								commit.controllerLines, 
 								commit.additions + commit.deletions	);
 	
-	svg.append("svg:circle")
+	var plottedCommit = svg.append("svg:circle")
 		.attr("cx", xpoint(committime, radius))
 		.attr("cy", ypoint(committime, radius))
-		.attr("r", commitradius)
+		.attr("r", Math.min(Math.max(5,commitradius), RADIUS/2))
 		.style("stroke", commitcolour.darker(2))
 		.style("stroke-width", 2)
 		.style("fill", commitcolour)
+		.attr("opacity", 0.5)
 		.transition()
 			.duration(scaleDuration(circle.attr("r")))
 			.ease("linear")
 			.attr("cx", WIDTH/2)
 			.attr("cy", HEIGHT/2)
+			.each("end", function() { update(commit); })
 			.remove();
+			
+	//plottedCommit.each("end", console.log("destroyed"));
 }
 
+
 function updateWedge(commit) {
-	var datapie = getTimewedge(commit.timeAverage, commit.timeStdev);
+	Nhour++;
+	S1hour = S1hour + Math.floor(commit.committedDateInSeconds / 3600);
+	S2hour = S2hour + Math.pow(Math.floor(commit.committedDateInSeconds / 3600), 2);
+
+	var datapie = getTimewedge(S1hour/Nhour, std(Nhour,S2hour,S1hour));
 	var timewedge = svg.select("#timewedge").data(datapie);
 	timewedge.transition()
-		.duration(500)
+		.duration(TRANSITION)
 		.attr("d", timewedgearc)
 		.attr("fill", colour(mlines, vlines, clines, linesmodified))
 }
 
 function updateBackground(commit) {
-
-	
-	//console.log(mlines + " " + vlines + " " + clines + " " + linesmodified);
+				
+	Ncommit++;
+	S1commit = S1commit + commit.additions + commit.deletions;
+	S2commit = S2commit + scaleSquare(commit.additions + commit.deletions);
 	
 	var commitcircle = svg.select("#commitcircle")
 		.transition()
-		.duration(500)
-		.attr("r", commit.average)//s + commit.standardDeviation)
+		.duration(TRANSITION)
+		.attr("r", Math.max(5,S1commit/Ncommit))
 		.attr("fill", colour(mlines, vlines, clines, linesmodified));
-
+		
+	var commitcirclestd = svg.select("#commitcircle-std")
+		.transition()
+		.duration(TRANSITION)
+		.attr("r", Math.max(5,S1commit/Ncommit + std(Ncommit,S2commit,S1commit)))
+		.attr("fill", colour(mlines, vlines, clines, linesmodified));
+/*
 	var M = Math.floor(100*(mlines/linesmodified));
 	var V = Math.floor(100*(vlines/linesmodified));
 	var C = Math.floor(100*(clines/linesmodified));
 	var O = 100 - M - V - C;
 
 	var oldM = colourdata[0].end;
-	var oldV = M - colourdata[1].end;
-	var oldC = (M + V) - colourdata[2].end;
+	var oldV = colourdata[1].end;
+	var oldC = colourdata[2].end;
 	var oldO = 100 - oldM - oldV - oldC;
 	
 	var diff = [Math.abs(M-oldM),
@@ -265,8 +317,7 @@ function updateBackground(commit) {
 		.transition()
 		.duration(function(d) { return scaleDiff(d.diff); })
 		.attr("d", mvcpiearc);
-	
-	//console.log(linesmodified + " " + commit.average + " " + commit.standardDeviation);
+*/	
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -345,5 +396,8 @@ function colour(m, v, c, total) {
 		return COLOURS[GRAY];
 }
 
+function std(N, S2, S1) {
+	return Math.sqrt((N*S2) - Math.pow(S1,2))/N
+}
 
 
