@@ -21,9 +21,6 @@ public class Author {
 
     private CommitTimeMetrics commitTimeMetrics;
 
-    private List<Integer> runningAvgCombined = new ArrayList<Integer>();
-    private List<Double> runningStdevCombined = new ArrayList<Double>();
-
     /* Constructor */
     public Author(String login) {
     	this.login = login;
