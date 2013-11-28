@@ -28,7 +28,6 @@ public class CommitTimeAnalyzer {
 	private static int calculateAvgCommitGap(List<CommitInfo> commitList) {
 		long total = 0;
 		long prev = 0;
-		//Collections.reverse(commitList);
 		for (CommitInfo commit : commitList) {
 			long curr = commit.getCommittedDate().getTime() / 1000;
 			if (prev != 0 && curr != 0) {

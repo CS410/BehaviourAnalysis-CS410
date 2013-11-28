@@ -1,12 +1,7 @@
-import Analyzer.CommitContentAnalyzer;
-import Analyzer.CommitPatternAnalyzer;
-import Analyzer.CommitTimeAnalyzer;
-import Metrics.CommitContentMetrics;
 import RepositoryAdapters.EGitAdapter;
 import RepositoryAdapters.JGitAdapter;
 import RepositoryContent.Author;
 import RepositoryContent.CommitInfo;
-import Util.DirectoryScraper;
 import Util.FileChangesScraper;
 import Util.JSONConvert;
 
@@ -34,11 +29,10 @@ import java.util.Map;
 public class main {
     public static void main(String[] args) throws IOException, GitAPIException {
     	// print output to file
-    	File file = new File("output.json");
+    	File file = new File("visualization/jsondata.js");
     	FileOutputStream fis = new FileOutputStream(file);
     	PrintStream out = new PrintStream(fis);
-    	//System.setOut(out);
-    	
+
         JGitAdapter jgitAdapter = new JGitAdapter();
         EGitAdapter egitAdapter = new EGitAdapter();
         FileChangesScraper scraper = new FileChangesScraper(jgitAdapter.getRepo());
@@ -66,10 +60,9 @@ public class main {
     	
     	// Prints Json to file
 
-    	CommitPatternAnalyzer.calcRunningAverages(authorMap);
     	JSONObject jsonMap = JSONConvert.mapToJSONByDay(authorMap);
 
         System.setOut(out);
-        System.out.println(jsonMap.toString());
+        System.out.println("var jsondata = " + jsonMap.toString());
     }
 }

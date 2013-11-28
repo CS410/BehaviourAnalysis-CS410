@@ -52,14 +52,13 @@ public class JSONConvert {
         return commitInfoJSON;
     }
 
-    public static int compareDates(Calendar c1, Calendar c2) {
-        if (c1.get(Calendar.YEAR) != c2.get(Calendar.YEAR))
-            return c1.get(Calendar.YEAR) - c2.get(Calendar.YEAR);
-        if (c1.get(Calendar.MONTH) != c2.get(Calendar.MONTH))
-            return c1.get(Calendar.MONTH) - c2.get(Calendar.MONTH);
-        return c1.get(Calendar.DAY_OF_MONTH) - c2.get(Calendar.DAY_OF_MONTH);
-    }
-
+    /**
+     * Compares two dates and checks if the day is the same
+     *
+     * @param d1 first date
+     * @param d2 second date
+     * @return JSONObject
+     */
     public static boolean compareDates(Date d1, Date d2) {
         Calendar c1 = Calendar.getInstance();
         Calendar c2 = Calendar.getInstance();
@@ -130,8 +129,6 @@ public class JSONConvert {
                 
                 while (compareDates(incrementCalendar.getTime(), commitInfo.getCommittedDate())) {
                     JSONObject commitJSON = convertCommitList(commitInfo);
-                    commitJSON.put("average", authorObject.getRunningAvgCombined().get(count));
-                    commitJSON.put("standardDeviation", authorObject.getRunningStdevCombined().get(count));
                     commitJSON.put("timeAverage", authorObject.getCommitTimeMetrics().getRunningAvg().get(count));
                     commitJSON.put("timeStdev", authorObject.getCommitTimeMetrics().getRunningStdev().get(count));
                     commitListJSON.add(commitJSON);
@@ -153,53 +150,6 @@ public class JSONConvert {
             authorJSON.put("commitList", commitByDayJSON);
             authorMapJSON.put(authorObject.getLogin(), authorJSON);
         }
-        return authorMapJSON;
-    }
-
-    @SuppressWarnings("unchecked")
-	public static JSONObject mapToJSON(Map<String, Author> authorCommits) {
-        JSONObject authorMapJSON = new JSONObject();
-
-        JSONObject childJSON;
-
-        for (String author : authorCommits.keySet() ) {
-            JSONObject authorJSON = new JSONObject();
-            childJSON = new JSONObject();
-
-            Author authorObject = authorCommits.get(author);
-            int count = 0;
-
-            authorJSON.put("name", authorObject.getName());
-            authorJSON.put("login", authorObject.getLogin());
-            authorJSON.put("email", authorObject.getEmail());
-
-            for (int avg: authorObject.getRunningAvgCombined()) {
-                childJSON.put(count, avg);
-                count ++;
-            }
-            authorJSON.put("averages", childJSON);
-
-            childJSON = new JSONObject();
-            count = 0;
-
-            for (double stdev : authorObject.getRunningStdevCombined()) {
-                childJSON.put(count, stdev);
-            }
-            authorJSON.put("standardDeviations", childJSON);
-
-            List<CommitInfo> commitList = authorObject.getCommitList();
-
-            JSONObject commitJSON = new JSONObject();
-
-            for (int i = commitList.size()-1; i>=0; i--) {
-                commitJSON.put("commitInfo", convertCommitList(commitList.get(i)));
-            }
-
-            authorJSON.put("commitList", commitJSON);
-
-            authorMapJSON.put(authorObject.getLogin(), authorJSON);
-        }
-
         return authorMapJSON;
     }
 }

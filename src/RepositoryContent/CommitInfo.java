@@ -34,10 +34,6 @@ public class CommitInfo {
     public String getAuthorLogin() {
     	return commit.getAuthor().getLogin();
     }
-    
-    public String getCommitterLogin() {
-    	return commit.getCommitter().getLogin();
-    }
 
     public Date getAuthoredDate() {
     	return commit.getCommit().getAuthor().getDate();

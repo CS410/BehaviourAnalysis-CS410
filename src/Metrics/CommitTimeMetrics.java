@@ -38,18 +38,6 @@ public class CommitTimeMetrics {
 		this.runningStdev = runningStdev;
 	}
 	
-	public int getAverageCommitGap() {
-		return this.averageCommitGap;
-	}
-	
-	public Map<Integer, Integer> getCommitTimeTable() {
-		return this.commitTimeTable;
-	}
-	
-	public List<Integer> getWorkHourDistribution() {
-		return this.workHourDistribution;
-	}
-	
 	public List<Integer> getRunningAvg() {
 		return this.runningAvg;
 	}
