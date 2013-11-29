@@ -21,6 +21,7 @@ public class JGitAdapter {
 	private Map<String, RevCommit> commitMap;
 	private Repository localRepo;
 
+    /* Constructor */
 	public JGitAdapter() throws IOException, NoHeadException, JGitInternalException {
 	    File localPath = new File("reddit-repo");
 	    delete(localPath);
@@ -33,15 +34,18 @@ public class JGitAdapter {
 	    revCommits = git.log().all().call();
 	    commitMap = buildCommitMap();
 	}
-	
+
+    /*  Returns a map of commits */
 	public Map<String, RevCommit> getCommitMap() {
 		return commitMap;
 	}
-	
+
+    /* Returns the targetted repository */
 	public Repository getRepo() {
 		return localRepo;
 	}
-	
+
+    /* Creates a map of <checksum, RevCommit>  */
 	private Map<String, RevCommit> buildCommitMap() {
         Map<String, RevCommit> commitMap = new HashMap<String, RevCommit>();
         for (RevCommit revCommit: revCommits) {
@@ -49,7 +53,8 @@ public class JGitAdapter {
         }
         return commitMap;
 	}
-    
+
+    /* Removes a file */
     private void delete(File file) throws IOException{
         if(file.isDirectory()){
             if (file.list().length == 0){
