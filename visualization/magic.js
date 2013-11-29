@@ -1,17 +1,19 @@
+// Developer GitHub ID to display
 var developerkey = "kemitche";
 
+// Modifiable elements on screen
 var dev = document.getElementById("dev");
 dev.innerHTML = "<b>"+developerkey+"</b>";
-
 var datediv = document.getElementById("date");
 
-
+// Screen variables
 var WIDTH = window.innerWidth,
     HEIGHT = window.innerHeight,
 	OUTER = 75,
     RADIUS = Math.min(WIDTH, HEIGHT) / 3; // Scaling the radius 
+
+// Duration/Speed of visualization
 var MULTIPLIER = 10;
-	
 var DAY_DURATION = 2500,
 	DAY_FREQUENCY = DAY_DURATION / MULTIPLIER,
 	DAY_INDEX = -1;
@@ -20,6 +22,7 @@ var TRANSITION = Math.min(1000, DAY_DURATION/2);
 
 var	z = d3.scale.category20c(); // MAGIC?
 
+// Colour constants
 var COLOURS = [	d3.rgb(255,0,0),
 				d3.rgb(0,0,255),
 				d3.rgb(255,255,0),
@@ -44,13 +47,12 @@ var svg = d3.select("#svgdiv").append("svg")
 	.attr("width", WIDTH)
     .attr("height", HEIGHT);
 
-	
-
 
 //////////////////////////////////////////////////////////////////////////
 // DATA
 //////////////////////////////////////////////////////////////////////////
 
+// JSON Data
 var commitlist = jsondata[developerkey].commitList;
 var sortedkeys = Object.keys(commitlist).sort();
 
@@ -59,29 +61,27 @@ var mlines = 0;
 var vlines = 0;
 var clines = 0;
 var llines = 0;
-
 var mvclines = 0;
 
+// Used for running standard deviation of commit data
 var Ncommit = 0;
 var S2commit = 0;
 var S1commit = 0;
 
+// Used for running standard deviation of time data
 var Nhour = 0;
 var S2hour = 0;
 var S1hour = 0;
 
-var colourdata = getMVCpie(0,0,0,0,[0,0,0,0]);
 
 // Scaling functions for seconds and duration plotting
 var scaleClock = d3.scale.linear().domain([0, DAY_FREQUENCY-1]).range([0, 2*Math.PI]);
 var scaleDuration  = d3.scale.linear().domain([1, RADIUS]).range([0, DAY_DURATION]);
-var scaleMVC = d3.scale.linear().domain([0,100]).range([0, 2*Math.PI]);
 var scaleSeconds = d3.scale.linear().domain([0,86400]).range([0, DAY_FREQUENCY-1]);
 var scaleHours = d3.scale.linear().domain([0,23]).range([0, DAY_FREQUENCY-1]);
-//var scaleDiff = d3.scale.linear().domain([0,100]).range([0, 500]);
 var scaleSquare = d3.scale.pow().exponent(2);
 
-// Arc function to update clock hand
+// Arc functions 
 var clockarc = d3.svg.arc()
     .startAngle(function(d) { return scaleClock(d.value); })
     .endAngle(function(d) { return scaleClock(d.value); })
@@ -94,25 +94,9 @@ var timewedgearc = d3.svg.arc()
 	.innerRadius(0)
 	.outerRadius(RADIUS+OUTER);
 
-		
-var mvcpiearc = d3.svg.arc()
-	.startAngle(function(d){return scaleMVC(d.start);})
-	.endAngle(function(d){return scaleMVC(d.end);})	
-	.innerRadius(RADIUS+OUTER)
-	.outerRadius(RADIUS+(OUTER*2));
-
-
 //////////////////////////////////////////////////////////////////////////
 // VISUALIZATION BEGIN
 //////////////////////////////////////////////////////////////////////////	
-
-//svg.selectAll(".mvcpie").data(colourdata)
-//	.enter().append("path")
-//	//.attr("d", mvcpiearc)
-//	.attr("class", "mvcpie")
-//	.attr("fill", function(d){return d.colour;})
-//	.attr("opacity", 0.25)
-//	.attr("transform", "translate("+WIDTH/2+","+HEIGHT/2+")");
 
 svg.selectAll("#timewedge").data(getTimewedge)
 	.enter().append("path")
@@ -169,12 +153,12 @@ drawCircle(); // Draw initial circle
 
 // New circle every DAY_FREQUENCY - same as rotating clock hand
 setInterval(function() {
-	//console.log(commitlist[sortedkeys[DAY_INDEX]]);
+	// console.log(commitlist[sortedkeys[DAY_INDEX]]);
 	drawCircle();
 }, DAY_FREQUENCY);
 
-var t0 = window.performance.now();
 
+var t0 = window.performance.now();
 // Timer is not guaranteed to tick 1 ms, accuracy is up to 10ms
 d3.timer(function() {
 	var dataclock = getNow();
@@ -189,7 +173,8 @@ d3.timer(function() {
 		var commit = commits[0];
 		var ms = scaleSeconds(commit.committedDateInSeconds);
 		if (dataclock[0].value%DAY_FREQUENCY >= ms) {
-			
+
+			// Sum up commit data
 			mlines = commit.modelLines + mlines;
 			vlines = commit.viewLines + vlines;
 			clines = commit.controllerLines + clines;
@@ -197,10 +182,7 @@ d3.timer(function() {
 			linesmodified = commit.additions + commit.deletions + linesmodified;
 			mvclines = mlines + vlines + clines;
 		
-			//console.log(dataclock[0].value%500 + " vs " + array[0]);
 			plotCommit(DAY_INDEX, commit);
-			//updateBackground(commit);
-			//updateWedge(commit);
 			commits.shift();
 		}
 	}
@@ -214,7 +196,7 @@ d3.timer(function() {
 function drawCircle() {
 	DAY_INDEX++;
 	datediv.innerHTML = "<b>"+sortedkeys[DAY_INDEX]+"</b>";
-	//console.log(sortedkeys[DAY_INDEX]);
+	
 	svg.append("svg:circle")
 		.attr("id", "circle-".concat(DAY_INDEX.toString()))
 		.attr("cx", WIDTH / 2)
@@ -234,10 +216,12 @@ function drawCircle() {
 	return circle[0];
 }
 
+// Update components of visualization as commits enter middle
+// Called when commits dissapear in center
 function update(commit) {
 	updateBackground(commit);
 	updateWedge(commit);
-	console.log(mlines + " " + vlines + " " + clines + " " + llines + " " + mvclines);
+	// console.log(mlines + " " + vlines + " " + clines + " " + llines + " " + mvclines);
 }
 
 // Plots commit circle onto day circle
@@ -267,14 +251,14 @@ function plotCommit(circleindex, commit) {
 			.ease("linear")
 			.attr("cx", WIDTH/2)
 			.attr("cy", HEIGHT/2)
-			.each("end", function() { update(commit); })
+			.each("end", function() { update(commit); }) // On end, update wedge and background
 			.remove();
-			
-	//plottedCommit.each("end", console.log("destroyed"));
 }
 
-
+// Updates the time wedge of developer hours
 function updateWedge(commit) {
+	// Running standard deviation calculation found from wikipedia
+	// http://en.wikipedia.org/wiki/Standard_deviation#Rapid_calculation_methods
 	Nhour++;
 	S1hour = S1hour + Math.floor(commit.committedDateInSeconds / 3600);
 	S2hour = S2hour + Math.pow(Math.floor(commit.committedDateInSeconds / 3600), 2);
@@ -287,8 +271,10 @@ function updateWedge(commit) {
 		.attr("fill", colour(mlines, vlines, clines, llines, mvclines))
 }
 
+// Updates the commit data: average commit size and directory
 function updateBackground(commit) {
-				
+	// Running standard deviation calculation found from wikipedia
+	// http://en.wikipedia.org/wiki/Standard_deviation#Rapid_calculation_methods	
 	Ncommit++;
 	S1commit = S1commit + commit.additions + commit.deletions;
 	S2commit = S2commit + scaleSquare(commit.additions + commit.deletions);
@@ -305,29 +291,6 @@ function updateBackground(commit) {
 		.attr("r", Math.min(Math.min(WIDTH, HEIGHT), 
 							Math.max(5,S1commit/Ncommit + std(Ncommit,S2commit,S1commit))))
 		.attr("fill", colour(mlines, vlines, clines, llines, mvclines));
-/*
-	var M = Math.floor(100*(mlines/linesmodified));
-	var V = Math.floor(100*(vlines/linesmodified));
-	var C = Math.floor(100*(clines/linesmodified));
-	var O = 100 - M - V - C;
-
-	var oldM = colourdata[0].end;
-	var oldV = colourdata[1].end;
-	var oldC = colourdata[2].end;
-	var oldO = 100 - oldM - oldV - oldC;
-	
-	var diff = [Math.abs(M-oldM),
-				Math.abs(V-oldV),				
-				Math.abs(C-oldC),				
-				Math.abs(O-oldO)]
-	
-	colourdata = getMVCpie(M,V,C,100-M-V-C,diff);
-	
-	svg.selectAll(".mvcpie").data(colourdata)
-		.transition()
-		.duration(function(d) { return scaleDiff(d.diff); })
-		.attr("d", mvcpiearc);
-*/	
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -348,35 +311,6 @@ function getTimewedge(time, std) {
 	]
 }
 
-function getMVCpie(M,V,C,O,diff) {
-	return [
-			{
-				start: 	0,
-				end:	M,
-				diff: 	diff[0],
-				colour:	COLOURS[RED]
-			},
-			{
-				start: 	M,
-				end:	M+V, 
-				diff: 	diff[1],
-				colour:	COLOURS[YELLOW]
-			},
-			{
-				start: 	M+V,
-				end:	M+V+C, 
-				diff: 	diff[2],
-				colour:	COLOURS[BLUE]
-			},			
-			{
-				start: 	M+V+C,
-				end:	100, 
-				diff: 	diff[3],
-				colour:	COLOURS[GRAY]
-			},
-	]
-}
-
 // Converts ms to angle and generates x point to plot
 function xpoint(ms, radius) {
 	var angle = scaleClock(ms);
@@ -389,6 +323,7 @@ function ypoint(ms, radius) {
 	return HEIGHT/2 - Math.cos(scaleClock(ms)) * radius
 }
 
+// Colour function to determine how to colour commits and background
 function colour(m, v, c, l, total) {
 	if (m/total >= 0.60)
 		return COLOURS[RED];
@@ -408,6 +343,8 @@ function colour(m, v, c, l, total) {
 		return COLOURS[GRAY];
 }
 
+// Running standard deviation calculation found from wikipedia
+// http://en.wikipedia.org/wiki/Standard_deviation#Rapid_calculation_methods
 function std(N, S2, S1) {
 	return Math.sqrt((N*S2) - Math.pow(S1,2))/N
 }
