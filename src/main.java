@@ -2,6 +2,7 @@ import RepositoryAdapters.EGitAdapter;
 import RepositoryAdapters.JGitAdapter;
 import RepositoryContent.Author;
 import RepositoryContent.CommitInfo;
+import Util.DirectoryScraper;
 import Util.FileChangesScraper;
 import Util.JSONConvert;
 
@@ -48,9 +49,10 @@ public class main {
     		if(author != null) {
     			login = author.getLogin();
     			CommitInfo commitInfo = new CommitInfo(commit);
-    			// Add file changes to commitinfo
+    			// Add file changes and directory distribution to commitinfo
     			if (commitMap.containsKey(commitInfo.getSha())) {
     				scraper.addListOfFileChanges(commitInfo, commitMap.get(commitInfo.getSha()));
+    				commitInfo.setDirectoryDistribution(DirectoryScraper.getDirectoryDistribution(commitInfo));
     			}
     			authorMap.get(login).addCommit(commitInfo);
     		} else {

@@ -21,7 +21,8 @@ public class CommitInfo {
     private List<FileChanges> filesChangedList;
     private int additions;
     private int deletions;
-
+    private DirectoryDistribution directoryDistribution; 
+    
     /* Constructor */
     public CommitInfo(RepositoryCommit commit) {
     	this.commit = commit;
@@ -84,5 +85,15 @@ public class CommitInfo {
     	Calendar calendar = GregorianCalendar.getInstance();
     	calendar.setTime(committedDate);
     	return calendar.get(Calendar.SECOND) + calendar.get(Calendar.MINUTE) * 60 + calendar.get(Calendar.HOUR_OF_DAY) * 3600;
+    }
+    
+    /* Set the directory distribution of the lines changed in a commit */
+    public void setDirectoryDistribution(DirectoryDistribution directoryDistribution) {
+    	this.directoryDistribution = directoryDistribution;
+    }
+    
+    /* Return the directory distribution */
+    public DirectoryDistribution getDirectoryDistribution() {
+    	return directoryDistribution;
     }
 }

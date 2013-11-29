@@ -1,20 +1,19 @@
 package Util;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import RepositoryContent.CommitInfo;
+import RepositoryContent.DirectoryDistribution;
 import RepositoryContent.FileChanges;
 
 public class DirectoryScraper {
 	
 	
-	public static Map<String, Integer> getDirectoryDistribution(CommitInfo commitInfo) {
+	public static DirectoryDistribution getDirectoryDistribution(CommitInfo commitInfo) {
 		int modelLines = 0;
 		int controllerLines = 0;
 		int viewLines = 0;
-		int libLines = 0;
+		int libraryLines = 0;
 		int otherLines = 0;
 		
 		List<FileChanges> filesChanged = commitInfo.getFilesChanged();
@@ -29,7 +28,7 @@ public class DirectoryScraper {
 			} else if (filename.startsWith("r2/r2/controllers/")) {
 				controllerLines = controllerLines + linesChanged;
 			} else if (filename.startsWith("r2/r2/lib/")) {
-				libLines = libLines + linesChanged;
+				libraryLines = libraryLines + linesChanged;
 			} else if (filename.startsWith("r2/r2/public/") || 
 					filename.startsWith("r2/r2/templates/")) {
 				viewLines = viewLines + linesChanged;
@@ -37,13 +36,13 @@ public class DirectoryScraper {
 				otherLines = otherLines + linesChanged;
 			}
 		}
-		Map<String, Integer> directoryDistribution = new HashMap<String, Integer>();
+		DirectoryDistribution directoryDistribution = new DirectoryDistribution();
 		
-		directoryDistribution.put("Model", modelLines);
-		directoryDistribution.put("Controller", controllerLines);
-		directoryDistribution.put("View", viewLines);
-		directoryDistribution.put("Library", libLines);
-		directoryDistribution.put("Other", otherLines);
+		directoryDistribution.setModelLines(modelLines);
+		directoryDistribution.setViewLines(viewLines);
+		directoryDistribution.setControllerLines(controllerLines);
+		directoryDistribution.setLibraryLines(libraryLines);
+		directoryDistribution.setOtherLines(otherLines);
 		
 		return directoryDistribution;
 	}

@@ -3,6 +3,7 @@ package Util;
 import Analyzer.CommitTimeAnalyzer;
 import RepositoryContent.Author;
 import RepositoryContent.CommitInfo;
+import RepositoryContent.DirectoryDistribution;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -41,13 +42,13 @@ public class JSONConvert {
         commitInfoJSON.put("deletions", commitInfo.getDeletions());
         commitInfoJSON.put("committedDateInSeconds", commitInfo.getCommittedDateInSeconds());
 
-        Map<String, Integer> dirDistribution = DirectoryScraper.getDirectoryDistribution(commitInfo);
+        DirectoryDistribution dirDistribution = commitInfo.getDirectoryDistribution();
         
-        commitInfoJSON.put("modelLines", dirDistribution.get("Model"));
-        commitInfoJSON.put("controllerLines", dirDistribution.get("Controller"));
-        commitInfoJSON.put("viewLines", dirDistribution.get("View"));
-        commitInfoJSON.put("libLines", dirDistribution.get("Library"));
-        commitInfoJSON.put("otherLines", dirDistribution.get("Other"));
+        commitInfoJSON.put("modelLines", dirDistribution.getModelLines());
+        commitInfoJSON.put("controllerLines", dirDistribution.getControllerLines());
+        commitInfoJSON.put("viewLines", dirDistribution.getViewLines());
+        commitInfoJSON.put("libLines", dirDistribution.getLibraryLines());
+        commitInfoJSON.put("otherLines", dirDistribution.getOtherLines());
 
         return commitInfoJSON;
     }
