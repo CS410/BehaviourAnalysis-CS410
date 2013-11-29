@@ -11,11 +11,17 @@ import RepositoryContent.CommitInfo;
 
 public class CommitTimeAnalyzer {
 	
+	/* Generate a CommitTimeMetrics object for a given author */
 	public static void generateCommitTimeMetrics(Author author) {
 		CommitTimeMetrics commitTimeMetrics = author.getCommitTimeMetrics();
 		calculateRunningAvg(author, commitTimeMetrics);
 	}
 	
+	/* Given an author, retrieve the list of commits and calculate a list of running averages and
+	 * standard deviations of the commit times. "Running" means taking the commit times of the 
+	 * current commit and any previous commits and calculating the average and standard deviation
+	 * from those numbers.
+	 */
 	private static void calculateRunningAvg(Author author, CommitTimeMetrics commitTimeMetrics) {
 		List<CommitInfo> commitList = author.getCommitList();
 		List<Integer> runningAvg = new ArrayList<Integer>();

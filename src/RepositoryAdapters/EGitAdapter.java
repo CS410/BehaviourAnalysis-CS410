@@ -36,18 +36,17 @@ public class EGitAdapter {
 		authorMap = buildAuthorMap();
 	}
 	
-	public List<Contributor> getContributors() {
-		return contributors;
-	}
-	
+	/* Get a list of all the commits in the repository */
 	public List<RepositoryCommit> getCommits() {
 		return commits;
 	}
 	
+	/* Return the author map */
 	public Map<String, Author> getAuthorMap() {
 		return authorMap;
 	}
 	
+	/* Build a map of Author objects linked to their login */
 	private Map<String, Author> buildAuthorMap() {
     	Map<String, Author> authorMap = new HashMap<String, Author>();
     	for (Contributor contributor : contributors) {
