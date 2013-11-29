@@ -31,7 +31,8 @@ public class FileChangesScraper{
         this.repo = repo;
         this.rw = new RevWalk(repo);
     }
-    
+
+    /* Given a commit, finds which files have been changed and the lines that have been added/removed */
     public void addListOfFileChanges(CommitInfo commitInfo, RevCommit commit) throws IOException {
         List<DiffEntry> diffs;
         DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
@@ -60,6 +61,7 @@ public class FileChangesScraper{
         commitInfo.setDeletions(deletions);
     }
 
+    /* Find line changes */
     private List<String> findChanges(String prefix, DiffEntry diff) throws IOException {
         List<String> changes = new ArrayList<String>();
 

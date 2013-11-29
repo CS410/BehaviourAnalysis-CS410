@@ -22,51 +22,63 @@ public class CommitInfo {
     private int additions;
     private int deletions;
 
+    /* Constructor */
     public CommitInfo(RepositoryCommit commit) {
     	this.commit = commit;
         this.filesChangedList = new ArrayList<FileChanges>();
     }
-    
+
+    /* Returns SHA-1 checksum */
     public String getSha() {
     	return commit.getSha();
     }
-    
+
+    /* Returns author login id */
     public String getAuthorLogin() {
     	return commit.getAuthor().getLogin();
     }
 
+    /* Returns Authored Date*/
     public Date getAuthoredDate() {
     	return commit.getCommit().getAuthor().getDate();
     }
-    
+
+    /* Returns committed date */
     public Date getCommittedDate() {
     	return commit.getCommit().getCommitter().getDate();
     }
-    
+
+    /* Set number of lines added for the commit */
     public void setAdditions(int additions) {
     	this.additions = additions;
     }
-    
+
+    /* Returns number of lines added for the commit */
     public int getAdditions() {
     	return additions;
     }
-    
+
+    /* Set number of lines removed for the commit */
     public void setDeletions(int deletions) {
     	this.deletions = deletions;
     }
-    
+
+    /* Returns number of lines removed for the commit */
     public int getDeletions() {
     	return deletions;
     }
-    
+
+    /* Add a file that has been changed in this commit */
     public void addChangedFile(FileChanges changedFile) {
     	filesChangedList.add(changedFile);
     }
 
+    /* Get list of files this commit has changed */
     public List<FileChanges> getFilesChanged() {
     	return filesChangedList;
     }
-    
+
+    /* Return when this commit has been changed on the day in seconds */
     public int getCommittedDateInSeconds() {
     	Date committedDate = this.getAuthoredDate();
     	Calendar calendar = GregorianCalendar.getInstance();

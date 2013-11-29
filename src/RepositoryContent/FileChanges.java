@@ -14,21 +14,24 @@ public class FileChanges {
     private List<String> additions;
     private List<String> deletions;
 
-
+    /* Constructor */
     public FileChanges(String filename, List<String> additions, List<String> deletions) {
         this.filename = filename;
         this.additions = additions;
         this.deletions = deletions;
     }
 
+    /* Name of file */
     public String getFilename(){
         return filename;
     }
 
+    /* List of lines added to file */
     public List<String> getLinesAdded() {
         return additions;
     }
 
+    /* List of lines removed from file */
     public List<String> getLinesDeleted () {
         return deletions;
     }
