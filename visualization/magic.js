@@ -12,7 +12,7 @@ var WIDTH = window.innerWidth,
     RADIUS = Math.min(WIDTH, HEIGHT) / 3; // Scaling the radius 
 var MULTIPLIER = 10;
 	
-var DAY_DURATION = 1000,
+var DAY_DURATION = 2500,
 	DAY_FREQUENCY = DAY_DURATION / MULTIPLIER,
 	DAY_INDEX = -1;
 	
